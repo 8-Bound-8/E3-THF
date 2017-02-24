@@ -20,6 +20,11 @@ Sub BER_Setup
 
 Sub BER_Background_Events
 
+/if (${Me.Combat} && ${Me.CombatAbilityReady[Cry Havoc]} && !${Me.Song[Cry Havoc].ID}) {
+
+/disc Cry Havoc
+}
+
 /return
 
 

@@ -10,71 +10,18 @@
 |--------------------------------------------------------------------------------|
 |- Attempts to arm 'Assassin's Strike' type disciplines before using backstab.	-|
 |--------------------------------------------------------------------------------|
-Sub check_rogStrike(discName)
-/if (${Debug}) /echo |- rogueStrike ==>
-	
-	/if (!${Defined[strikeDisc]}) {
-		/declare strikeDisc string outer ${discName}
-		/if (${strikeDisc.Equal[Daggerlunge Rk. III]}) {
-			/declare MinStrikeEndurance int outer 1270	
-		} else /if (${strikeDisc.Equal[Daggerlunge Rk. II]}) {
-			/declare MinStrikeEndurance int outer 1270	
-		} else /if (${strikeDisc.Equal[Daggerlunge]}) {
-			/declare MinStrikeEndurance int outer 1270	
-		} else /if (${strikeDisc.Equal[Swiftblade Rk. III]}) {
-			/declare MinStrikeEndurance int outer 1016	
-		} else /if (${strikeDisc.Equal[Swiftblade Rk. II]}) {
-			/declare MinStrikeEndurance int outer 1016
-		} else /if (${strikeDisc.Equal[Swiftblade]}) {
-			/declare MinStrikeEndurance int outer 1016		
-		} else /if (${strikeDisc.Equal[Razorarc]}) {
-			/declare MinStrikeEndurance int outer 650	
-		} else /if (${strikeDisc.Equal[Daggerfall]}) {
-			/declare MinStrikeEndurance int outer 625	
-		} else /if (${strikeDisc.Equal[Ancient: Chaos Strike]}) {
-			/declare MinStrikeEndurance int outer 575
-		} else /if (${strikeDisc.Equal[Kyv Strike]}) {
-			/declare MinStrikeEndurance int outer 550
-		} else /if (${strikeDisc.Equal[Assassin's Strike]}) {
-			/declare MinStrikeEndurance int outer 515
-		} else /if (${strikeDisc.Equal[Thief's Vengeance]}) {
-			/declare MinStrikeEndurance int outer 425
-		} else /if (${strikeDisc.Equal[Sneak Attack]}) {
-			/declare MinStrikeEndurance int outer 325
-		}
-	}
-
-	/if (${Me.Endurance} > ${MinStrikeEndurance} && ${Me.AbilityReady[Hide]} && ${Me.CombatAbilityReady[${strikeDisc}]}) {
-	
-		| Stop moving.
-		/if (${Stick.Active}) {
-			/squelch /stick pause
-			/delay 2s !${Me.Moving}
-		}
-		
-		| Turn off combat.
-		/if (${Me.Combat}) {
-			/attack off
-			/delay 2s !${Me.Combat}
-		}
-		
-		| Sneak
-		/doability Sneak
-		/delay 20 ${Me.Sneaking}
-		
-		| Hide.
-		/doability Hide
-		/delay 20 ${Me.Invis}
-		
+Sub check_rogStrike
+/if (${Debug}) /echo |- rogueStrike ==>	
+	/if (${Me.CombatAbilityReady[${strikeDisc}]} && ${Me.AbilityReady[Backstab]} && !${Me.ActiveDisc.ID} && ${Me.Invis} && ${Me.Sneaking}) {
 		| Use 'Assassin's Strike' type disc.
-		/if (${Me.Invis}) {
-			/call e3_Cast 0 "${strikeDisc}/Instant"
-			/attack on
-			/squelch /stick unpause
-			/delay 10
-		}
+		/delay 1
+		/disc ${strikeDisc}
+		/delay 5 ${Bool[${Me.ActiveDisc.ID}]}
+		/delay 3
+		/doability Backstab
+		/delay 1
+		/attack on
 	}
-
 /if (${Debug}) /echo <== rogueStrike -|
 /return
 
@@ -91,13 +38,13 @@ sub AutoHide
 	| Engage sneak.
 	/if (!${Me.Sneaking} && ${Me.AbilityReady[Sneak]}) {
 		/doability Sneak
-		/delay 2s ${Me.Sneaking}
+		/delay 1s ${Me.Sneaking}
 	}
 	
 	| Engage hide.
 	/if (${Me.Sneaking} && ${Me.AbilityReady[Hide]}) {
 		/doability Hide
-		/delay 2s ${Me.Invis}
+		/delay 1s ${Me.Invis}
 	}
 
 /if (${Debug}) /echo <== AutoHide -|
@@ -112,26 +59,13 @@ sub AutoHide
 |------------------------------------------------|
 sub AutoEvade
 /if (${Debug}) /echo |- AutoEvade ==>
-
-	/if (${Me.AbilityReady[Hide]}) {
-		
-		| Turn off combat.
-		/if (${Me.Combat}) {
-			/attack off
-			/delay 2s !${Me.Combat}
-		}
-		
-		| Hide.
+	/if (${Me.AbilityReady[Hide]} && !${Bool[${Me.ActiveDisc.ID}]}) {
+		/attack off
+		/delay 1s !${Me.Combat}	
 		/doability Hide
-		/delay 20 ${Me.Invis}
-		
-		| Turn combat back on.
-		/if (!${Me.Combat}) {
-			/attack on
-			/delay 2s ${Me.Combat}
-		}
+		/delay 1s ${Me.Invis}
+		/attack on
 	}
-
 /if (${Debug}) /echo <== AutoEvade -|
 /return
 
@@ -139,17 +73,16 @@ sub AutoEvade
 
 Sub ROG_Setup
 /if (${Debug}) /echo |- ROG_Setup ==>
-	
-	| Import a list of all rogue backstab disciplines from MacroData_Ini
-	/call IniToVar "${MacroData_Ini},Class Specific Info,Rogue Sneak Attack Disciplines" rogueStrikes string outer
-	
-	| Auto-Hide
+  /declare strikeTimer timer outer
 	/call IniToVar "${Character_Ini},Rogue,Auto-Hide (On/Off)" AutoHide bool outer
-	
-	| Auto-Evade
 	/call IniToVar "${Character_Ini},Rogue,Auto-Evade (On/Off)" AutoEvade bool outer
-	/if (${AutoEvade}) /call BuildArray MyAbilities Evade
+	| Assassin Strikes
+	/call IniToVar "${Character_Ini},Rogue,Sneak Attack Discipline" strikeDiscStr string outer
+	/declare strikeDisc 		string outer ${strikeDiscStr.Arg[1,/]}
 	
+  /if (${Bool[${strikeDisc}]} && !${AutoHide}) /docommand ${ChatToggle} I cannot use ${strikeDisc} without AutoHide On
+
+  
 /if (${Debug}) /echo <== ROG_Setup -|
 /return
 
@@ -157,7 +90,13 @@ Sub ROG_Setup
 
 Sub ROG_Background_Events
 
-	/if (${AutoHide} && !${Me.Invis} && !${Me.Moving} && !${Me.Combat}) /call AutoHide
+/if (${AutoHide} && !${Me.Invis} && !${Me.Moving} && ${Me.CombatState.NotEqual[COMBAT]}) /call AutoHide
+
+/if (${Me.Combat} && ${Me.CombatAbilityReady[Thief's Eyes]} && !${Me.Song[Thief's Eyes].ID}) {
+
+/disc Thief's Eyes
+}
+
 
 /return
 
@@ -165,9 +104,6 @@ Sub ROG_Background_Events
 
 SUB ROG_MacroSettings
 /if (${Debug}) /echo |- ROG_MacroSettings ==>
-
-	| MacroData_Ini settings
-	/call WriteToIni "${MacroData_Ini},Class Specific Info,Rogue Sneak Attack Disciplines" "Sneak Attack,Thief's Vengeance,Assassin's Strike,Kyv Strike,Ancient: Chaos Strike,Daggerfall,Razorarc,Swiftblade,Swiftblade Rk. II,Swiftblade Rk. III,Daggerlunge,Daggerlunge Rk. II,Daggerlunge Rk. III,Daggerswipe,Daggerswipe Rk. II,Daggerswipe Rk. III,Daggerstrike,Daggerstrike Rk. II,Daggerstrike Rk. III,Daggerthrust,Daggerthrust Rk. II,Daggerthrust Rk. III" 0
 
 	| Adv Settings
 	/call WriteToIni "${advSettings_Ini},ROG Functions,ROG Function#1" "check_Burns" 1
@@ -181,10 +117,9 @@ SUB ROG_MacroSettings
 
 SUB ROG_CharacterSettings
 /if (${Debug}) /echo |- ROG_CharacterSettings ==>
-
-	/call WriteToIni "${Character_Ini},${Me.Class},Auto-Hide (On/Off)"
-	/call WriteToIni "${Character_Ini},${Me.Class},Auto-Evade (On/Off)"
-
+	/call WriteToIni "${Character_Ini},${Me.Class},Auto-Hide (On/Off)" Off
+	/call WriteToIni "${Character_Ini},${Me.Class},Auto-Evade (On/Off)" On
+	/call WriteToIni "${Character_Ini},${Me.Class},Sneak Attack Discipline"
 /if (${Debug}) /echo <== ROG_CharacterSettings -|
 /RETURN
 

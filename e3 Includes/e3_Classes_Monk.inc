@@ -20,6 +20,11 @@ Sub MNK_Setup
 
 Sub MNK_Background_Events
 
+/if (${Me.Combat} && ${Me.CombatAbilityReady[Fists of Wu]} && !${Me.Song[Fists of Wu].ID}) {
+
+/disc Fists of Wu
+}
+
 /return
 
 
