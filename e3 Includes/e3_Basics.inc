@@ -7,7 +7,7 @@
 
 |---------------THF Forest Gate-----------------|
 
-#event thfgate "[MQ2] thfgate"
+#event thfgate "<#1#> thfgate"
 #event thfgate "you tell your party, 'thfgate'"
 #event thfgate "#1# tells the group, 'thfgate'"
 #event thfgate "#1# tells you, 'thfgate'"
@@ -1909,7 +1909,7 @@ SUB basics_CharacterSettings
 Sub basics_Aliases
 /if (${Debug} || ${Debug_Basics}) /echo |- basics_Aliases ==>
 
-	/noparse /squelch /alias /thfgate /echo thfgate
+	/squelch /alias /thfgate /bc thfgate
 	/noparse /squelch /alias /followon /bc Follow ${Me.CleanName}
 	/noparse /squelch /alias /followme /bc Follow ${Me.CleanName}
 	/noparse /squelch /alias /followit /bc Follow ${Target.CleanName}
