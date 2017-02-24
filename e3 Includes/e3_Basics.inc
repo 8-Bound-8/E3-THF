@@ -5,7 +5,30 @@
 |- Contains basic and miscellaneous EVENTs and functions of e3.mac.		-|
 |------------------------------------------------------------------------|
 
+|---------------THF Forest Gate-----------------|
 
+#event thfgate "you tell your party, 'thfgate'"
+#event thfgate "#1# tells the group, 'thfgate'"
+#event thfgate "#1# tells you, 'thfgate'"
+sub Event_thfgate
+	 
+		/if (${FindItem[=Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Charm of Queen Adrianne"
+			} else /if (${FindItem[=Advanced Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Advanced Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Magical Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Magical Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Advanced Magical Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Advanced Magical Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Superior Magical Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Superior Magical Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Exceptional Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Exceptional Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Exquisite Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Exquisite Charm of Queen Adrianne" 
+		}
+	
+/return
 
 |------------------------------
 |- Engages, and sets variables related to Follow.
@@ -1776,7 +1799,6 @@ SUB EVENT_reportMana(line,ChatSender)
 	/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_reportMana [${Me.PctMana}m] -|
 }
 /RETURN
-
 
 Sub basics_Setup
 /call INItoVar "${advSettings_Ini},Debug,Debug Basics (On/Off)" Debug_Basics bool outer
