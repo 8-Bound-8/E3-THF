@@ -29,7 +29,7 @@ SUB check_Yaulp
 /if (${Debug}) /echo <== check_clrYaulp -|
 /RETURN
 
-
+|-------------------------------------------------------------------------------|
 
 sub check_DivineArb
 /if (${Debug}) /echo |- check_DivineArb ==>
@@ -44,7 +44,9 @@ sub check_DivineArb
 				/if (${Bool[${NetBots[${Group.Member[${i}]}]}]} && ${NetBots[${Group.Member[${i}]}].PctHPs} < ${DivineArb_Pct} || ${Spawn[pc ${Group.Member[${i}]}].PctHPs} < ${DivineArb_Pct}) {
 					
 					/if (${NetBots[${Group.Member[${i}]}].PctHPs}<${DivineArb_Pct}) {
-						/if (${FindItemCount[Ancient Shield of the Divine]} && !${FindItem[Ancient Shield of the Divine].Timer} && !${itemTimer_${FindItem[=Ancient Shield of the Divine].ID}}) {
+						/if (${FindItemCount[Ancient Frozen Aegis of Divinity]} && !${FindItem[Ancient Frozen Aegis of Divinity].Timer}==0) && !${itemTimer_${FindItem[=Ancient Frozen Aegis of Divinity].ID}}) {
+							/call e3_Cast ${Me.ID} "Ancient Frozen Aegis of Divinity"
+						} else /if (${FindItemCount[Ancient Shield of the Divine]} && !${FindItem[Ancient Shield of the Divine].Timer}==0) && !${itemTimer_${FindItem[=Ancient Shield of the Divine].ID}}) {
 							/call e3_Cast ${Me.ID} "Ancient Shield of the Divine"
 						} else /if (${Me.AltAbilityReady[Divine Arbitration]}) {
 							/call e3_Cast ${Me.ID} "Divine Arbitration"
@@ -60,6 +62,7 @@ sub check_DivineArb
 /return
 
 
+|---------------------------------------------------------------------------------|
 
 sub check_celestialRegen
 /if (${Debug}) /echo |- check_celestialRegen ==>
@@ -88,7 +91,7 @@ sub check_celestialRegen
 /if (${Debug}) /echo <== check_celestialRegen -|
 /return
 
-
+|--------------------------------------------------------------------------------|
 
 #event Rez "<#1#> Rez"
 #event Rez "<#1#> Rezz"
@@ -116,7 +119,11 @@ sub Event_Rez(string line, string ChatSender)
 		/tell ${ChatSender} Wait4Rez
 		/if (${Select[${Me.Race},High Elf]}) /em pops a toot!
 	 
-		/if (${FindItem[Water Sprinkler of Nem Ankh].ID}) {
+		/if (${FindItem[Staff of the Earthcrafter].ID}) {
+			/call e3_Cast ${Spawn[${ChatSender}'s].ID} "Staff of the Earthcrafter"
+		} else /if (${FindItem[Hammer of Kerafyrm].ID}) {
+			/call e3_Cast ${Spawn[${ChatSender}'s].ID} "Hammer of Kerafyrm"
+		} else /if (${FindItem[Water Sprinkler of Nem Ankh].ID}) {
 			/call e3_Cast ${Spawn[${ChatSender}'s].ID} "Water Sprinkler of Nem Ankh"
 		} else /if (${Me.Book[Reviviscence]}) {
 			/call e3_Cast ${Spawn[${ChatSender}'s].ID} "Reviviscence/giveuptimer|45s"
@@ -143,7 +150,7 @@ sub Event_Rez(string line, string ChatSender)
 }
 /return
 
-
+|------------------------------------------------------------------------------|
 
 #EVENT AE_Rez "[MQ2] AE Rez"
 #EVENT AE_Rez "[MQ2] Rez all"
@@ -210,6 +217,8 @@ SUB EVENT_AE_Rez
 
 						/if (${FindItem[Water Sprinkler of Nem Ankh].ID}) {
 							/call e3_Cast ${corpseID} "Water Sprinkler of Nem Ankh" item
+						} else /if (${FindItem[Staff of the Earthcrafter].ID}) {
+							/call e3_Cast ${corpseID} "Staff of the Earthcrafter" item
 						} else /if (${Me.Book[Reviviscence]}) {
 							/call e3_Cast ${corpseID} "Reviviscence" Gem${DefaultGem} 45s
 						} else /if (${Me.Book[Ressurection]}) {
