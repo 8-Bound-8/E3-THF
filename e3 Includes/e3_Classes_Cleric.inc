@@ -215,10 +215,12 @@ SUB EVENT_AE_Rez
 
 						/tell ${playerName} Wait4Rez
 
-						/if (${FindItem[Water Sprinkler of Nem Ankh].ID}) {
-							/call e3_Cast ${corpseID} "Water Sprinkler of Nem Ankh" item
-						} else /if (${FindItem[Staff of the Earthcrafter].ID}) {
-							/call e3_Cast ${corpseID} "Staff of the Earthcrafter" item
+						/if (${FindItem[Staff of the Earthcrafter].ID}) {
+							/call e3_Cast ${corpseID} "Staff of the Earthcrafter"
+						} else /if (${FindItem[Hammer of Kerafyrm].ID}) {
+							/call e3_Cast ${corpseID} "Hammer of Kerafyrm"							
+						} else/if (${FindItem[Water Sprinkler of Nem Ankh].ID}) {
+							/call e3_Cast ${corpseID} "Water Sprinkler of Nem Ankh" 
 						} else /if (${Me.Book[Reviviscence]}) {
 							/call e3_Cast ${corpseID} "Reviviscence" Gem${DefaultGem} 45s
 						} else /if (${Me.Book[Ressurection]}) {
