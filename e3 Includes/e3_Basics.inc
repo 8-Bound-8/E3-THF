@@ -5,6 +5,47 @@
 |- Contains basic and miscellaneous EVENTs and functions of e3.mac.		-|
 |------------------------------------------------------------------------|
 
+|---------------THF Forest Gate-----------------|
+
+#event thfgate "<#1#> thfgate"
+#event thfgate "you tell your party, 'thfgate'"
+#event thfgate "#1# tells the group, 'thfgate'"
+#event thfgate "#1# tells you, 'thfgate'"
+sub Event_thfgate
+	 
+		/if (${FindItem[=Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Charm of Queen Adrianne"
+			} else /if (${FindItem[=Advanced Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Advanced Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Magical Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Magical Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Advanced Magical Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Advanced Magical Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Superior Magical Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Superior Magical Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Exceptional Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Exceptional Charm of Queen Adrianne" 
+			} else /if (${FindItem[=Exquisite Charm of Queen Adrianne].ID}) {
+				/call e3_Cast ${Me.ID} "Exquisite Charm of Queen Adrianne" 
+		}
+	
+/return
+
+|---------------Hidden Vale Gate-----------------|
+
+#event valegate "<#1#> valegate"
+#event valegate "you tell your party, 'valegate'"
+#event valegate "#1# tells the group, 'valegate'"
+#event valegate "#1# tells you, 'valegate'"
+sub Event_valegate
+	 
+		/if (${FindItem[=Token of the Vale].ID}) {
+				/call e3_Cast ${Me.ID} "Token of the Vale"
+		}
+	
+/return
+
+
 |------------------------------
 |- Engages, and sets variables related to Follow.
 |------------------------------
@@ -20,12 +61,12 @@
 #EVENT Follow "<#1#> Follow"
 #EVENT Follow "#1# tells you, 'Follow'"
 #EVENT Follow "#1# tells the group, 'Follow'"
-#EVENT Follow "#1# tell your party, 'Follow'"
+#EVENT Follow "#1# you tell your party, 'Follow'"
 #EVENT Follow "[#1#] Follow #2#"
 #EVENT Follow "<#1#> Follow #2#"
 #EVENT Follow "#1# tells you, 'Follow #2#'"
 #EVENT Follow "#1# tells the group, 'Follow #2#'"
-#EVENT Follow "#1# tell your party, 'Follow #2#'"
+#EVENT Follow "#1# you tell your party, 'Follow #2#'"
 SUB EVENT_Follow(line, ChatSender, eventParams)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_Follow ==>
 
@@ -37,14 +78,19 @@ SUB EVENT_Follow(line, ChatSender, eventParams)
 	
 		/declare SpawnToFollow string local ${If[${eventParams.Arg[1, ].Find[/]} || ${eventParams.Arg[1, ].Equal[me]} || ${eventParams.Arg[1, ].Equal[on]},${ChatSender},${eventParams.Arg[1, ]}]}
 		/if (!${Bool[${SpawnToFollow}]}) /varset SpawnToFollow ${ChatSender}
+		
 		| -Turn Following on and set the FollowTarget
 		/varset Following TRUE
 		/varset FollowTarget ${Spawn[pc ${SpawnToFollow}].CleanName}
+		
 		| -If I am the follow target
+		| =>
 		/if (${FollowTarget.Equal[${Me}]}) {
+
 			| -Turn off follow plugins.
 			/if (${Stick.Active}) /squelch /stick off
-			/if (${NetAdvPath.Status}==1) /squelch /netfollow off
+			/if (${NetAdvPath.State}) /squelch /netfollow off
+
 			| -create a list of bots following you.
 			/varset Followers 
 			/declare i int local
@@ -53,24 +99,32 @@ SUB EVENT_Follow(line, ChatSender, eventParams)
 			/next i
 		| <=
 		} else {
+		
 		| -If I am not the follow target
+		| =>
+		
 			| -Check Range
 			/if (${Spawn[=${FollowTarget}].Distance} > ${MaxResponseDist}) {
 				/docommand ${ChatToggle} [${FollowTarget}] is too far away.
 			} else {
+			
 				| -Check LoS.
 				/if (!${Spawn[=${FollowTarget}].LineOfSight}) {
 					/docommand ${ChatToggle} I cannot see [${FollowTarget}].
 				} else {
+				
 					| -Stop assisting so we don't try to stick to the AssistTarget.	
-					/if (${Assisting} || ${Me.Combat}) /call AssistOff
+					/if (${Assisting} || ${Me.Combat}) /call Event_BackOff
+					
 					| -Start Following.
 					/if (${Verbosity}) /docommand ${ChatToggle} Following ${FollowTarget}.
 					/call AquireFollow
 				}
 			}
+		| <=
 		}
 	}
+	
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_Follow -|
 /RETURN
 
@@ -83,17 +137,22 @@ SUB EVENT_Follow(line, ChatSender, eventParams)
 |----------------------------------------------------------------------------------------------------|
 SUB AquireFollow
 /if (${Debug} || ${Debug_Basics}) /echo |- AquireFollow ==>
+
 	|------------------------------------------------------------------------------------Check for FollowTarget in zone.
 	/if (${SpawnCount[=${FollowTarget}]}) {
+
 		|--------------------------------------------------------------------------------Check range to the FollowTarget
 		/if (${SpawnCount[=${FollowTarget} radius ${MaxResponseDist}]}) {
+
 			|----------------------------------------------------------------------------Check that I'm not the follow target.
 			/if (${FollowTarget.NotEqual[${Me.CleanName}]}) {
+
 				|------------------------------------------------------------------------Turn off any previous follow plugins.
 				/if (${Stick.Active}) /squelch /stick off
-				/if (${NetAdvPath.Status}==1) /squelch /netfollow off
-
+				/if (${NetAdvPath.State}==1) /squelch /netfollow off
+				
 				/declare followTargetID int local
+				
 				|--------------------------------------------------------------------Check Target ID
 				/if (${SpawnCount[pc =${FollowTarget}]}) {
 					/varset followTargetID ${Spawn[pc =${FollowTarget}].ID}
@@ -102,66 +161,96 @@ SUB AquireFollow
 				} else /if (${SpawnCount[pet ${FollowTarget}]}) {
 					/varset followTargetID ${Spawn[pet =${FollowTarget}].ID}
 				}
-				/if (${Bool[${Me.Casting.ID}]} && ${Me.Class.ShortName.NotEqual[BRD]}) /call interrupt
+
 				| If the FollowTarget is a NetBot, and you're using NetAdvPath
 				/if (${NetBots[${FollowTarget}].ID} && ${NetAdvPath}) {
+
 					| If the FollowTarget is a NetBot, engage MQ2NetAdvPath.
 					/if (${Spawn[id ${followTargetID}].LineOfSight}) {
 						/call TrueTarget ${followTargetID}
 						/squelch /netfollow on
-					} else /if (${NetAdvPath.Status}==2) {
+					} else /if (${NetAdvPath.State}==2) {
 						/squelch /netfollow unpause
 					}
 				} else {
+					
 				| If MQ2NetAdvPath was not detected, or the FollowTarget was not a NetBot, engage MQ2MoveUtils.
+				
 					|---------------------------------------------------Check LoS
 					/if (${Spawn[id ${followTargetID}].LineOfSight}) {
 						/call TrueTarget ${followTargetID}
 						/squelch /stick hold 20 uw
 					}
 				}
+
 				|-------------------------------------------------------Clear my target
 				/if (${Target.ID} == ${followTargetID}) /squelch /target clear
 			}
 		}
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== AquireFollow -|
+|** 
+	ADD A LOOP TO CALCULATE DISTANCE TO YOUR TARGET. ONCE DISTANCE STOPS DECREASING REISSUE FOLLOW COMMAND, TO SNAP TO TARGET
+	
+	/declare HeadingToSpawn string local ${Spawn[pc ${FollowTarget}].HeadingTo}
+	:movingLoop
+	/if (${Me.Moving}) {
+		/if () {
+		
+		}
+	}
+**|
 /RETURN
 
+
+
 |----------------------------------------------------------------------------|
-|- Disengages follow on bots who are in the same zone as the ChatSender.	  -|
-|- Use, /stop, in  /group, or /bc.							                              -|
+|- Disengages follow on bots who are in the same zone as the ChatSender.	-|
 |----------------------------------------------------------------------------|
+|- Use, /stop, or, 'stop' in /tell, /goup, or /bc.							-|
+|----------------------------------------------------------------------------|
+#EVENT Stop	"[#1#] Stop"
 #EVENT Stop	"<#1#> Stop"
+#EVENT Stop "#1# tells you, 'Stop'"
 #EVENT Stop "#1# tells the group, 'Stop'"
 #EVENT Stop "#1# you tell your party, 'Stop'"
 #EVENT Stop	"<#1#> Stop #2#"
+#EVENT Stop "#1# tells you, 'Stop #2#'"
 #EVENT Stop "#1# tells the group, 'Stop #2#'"
 #EVENT Stop "#1# you tell your party, 'Stop #2#'"
 SUB EVENT_Stop(line, ChatSender, eventParams)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_Stop ==>
+
 	| -Check if I'm following.
 	/if (${Following}) {
+		
 		| -Verify the event
 		/call verifyEvent "${ChatSender}" "${line}"
 		/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 		|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|
 		/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]}) {
+	
 			| -Wait to get close to the followTarget.
 			/if (!${Spawn[${FollowTarget}].Moving} && ${Spawn[${FollowTarget}].Distance} > ${LeashLength}) /delay 100 ${Spawn[${FollowTarget}].Distance} < ${LeashLength} || ${Spawn[${FollowTarget}].Moving}
+		
 			| -Stop following
 			/if (${Stick.Active}) /squelch /stick off
-			/if (${NetAdvPath.Status}==1) /squelch /netfollow off
+			/if (${NetAdvPath.State}==1) /squelch /netfollow off
 			/varset FollowTarget NULL
 			/varset Following FALSE
 		}
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_Stop -|
 /RETURN STOP
+
+
 
 #EVENT MoveHere "<#1#> Move to #2#"
 #EVENT MoveHere "#1# tells you, 'Move to #2#'"
 #EVENT MoveHere "#1# tells the group, 'Move to #2#'"
+#EVENT MoveHere "#1# you tell your party, 'Move to #2#'"
 SUB EVENT_MoveHere(line, ChatSender, eventParams)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_MoveHere ==>
 
@@ -175,8 +264,7 @@ SUB EVENT_MoveHere(line, ChatSender, eventParams)
 		/if (${ChatSender.Equal[${Me}]}) {
 			/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_MoveHere -| I am the ChatSender, skipping.
 		} else {
-      /if (${Stick.Active}) /squelch /stick off
-      /if (${NetAdvPath.Status}==1) /squelch /netfollow off
+		
 			| -Set WhereTo.
 			/declare moveTo_Name string local
 			/declare WhereTo string local ${If[${eventParams.Arg[1, ].Find[/]} || ${eventParams.Arg[1, ].Equal[me]} || ${eventParams.Arg[1, ].Equal[here]},${ChatSender},${eventParams.Arg[1, ]}]}
@@ -226,8 +314,10 @@ SUB EVENT_MoveHere(line, ChatSender, eventParams)
 			}
 		}
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_MoveHere -|
 /RETURN
+
 
 
 |--------------------------------------------------------------------------------------------------------|
@@ -244,15 +334,18 @@ SUB EVENT_MoveHere(line, ChatSender, eventParams)
 |- Use, '/bark MESSAGE', or, the command 'Bark at NAME MESSAGE' can be given in /bc, /g, or /tell.		-|
 |--------------------------------------------------------------------------------------------------------|
 #EVENT bark "<#1#> Bark at #2# #3#"
+#EVENT bark "#1# tells you, 'Bark at #2# #3#'"
 #EVENT bark "#1# tells the group, 'Bark at #2# #3#'"
-#EVENT bark "#1# tell your party, 'Bark at #2# #3#'"
+#EVENT bark "#1# you tell your party, 'Bark at #2# #3#'"
 SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_Bark ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |---------Included Bot----------|    |-------------In Zone-----------|    |------------In Range------------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
+		
 		| -If msgTarget is not an ID, find TargetID.
 		/if (!${Int[${msgTarget}]}) {
 			/if (${SpawnCount[npc =${msgTarget}]}) {
@@ -264,47 +357,38 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 			} else {
 				/echo Could not find a SpawnID for [${msgTarget}].
 				/varset msgTarget NULL
-				/return
 			}
 		}
+		
 		/declare barkTarget string outer ${Spawn[id ${msgTarget}].CleanName}
 		/declare barkReturned bool outer FALSE
-		/declare retryTimer timer local 35s
+		/declare retryTimer timer local 150
 		/declare startingLoc string local
 		
 		/if (${Stick.Active}) /squelch /stick off
-		/if (${NetAdvPath.Status}==1) /squelch /netfollow off
-		/if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /call interrupt
-
-    /call TrueTarget ${msgTarget}
-    /doevents flush barkReturn
-
-    /if (${Me.Class.ShortName.Equal[ROG]}) {
-      /target clear
-      /delay 2
-      /attack on
-      /delay 1
-      /attack off
-      /delay 1
-      /if (${Me.Invis}) /doability hide
-			/if (${Me.Sneaking}) /doability sneak
-    }
-    /call TrueTarget ${msgTarget}
+		/if (${NetAdvPath.State}==1) /squelch /netfollow off
+		/if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /delay 300 !${Me.Casting.ID}
+		
 		:retry_Bark
-		|/echo barking ${barkMsg} at ${barkTarget}
-    /if (${Me.Invis}) /makemevisible
-
+		/if (${Debug} && !${spamTimer_retryBark}) {
+			/echo |- EVENT_bark -| :retry_Bark loop
+			/call createTimer spamTimer_retryBark 20
+		}
+		
+		| -Target the msgTarget
+		/call TrueTarget ${msgTarget}
 		/if (${Target.Distance} > 10) {
 			/call MoveTo -Loc|${Target.Y},${Target.X}
-			/delay 3
 			/if (${retryTimer}) {
 				/goto :retry_Bark
 			} else {
 				/echo |- EVENT_Bark -| Failed to move to the intended target.
 			}
 		} else {
+		
 			| -Wait a moment, then bark the message.
-			/delay ${Math.Rand[10]}
+			/delay ${Math.Rand[30]}
+			
 			/varset startingLoc ${Me.Loc.Replace[ ,]}
 			
 			| -Reset barkMsg
@@ -315,8 +399,8 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 			
 			/say ${barkMsg}
 			
-			| -Wait up to 2 seconds for something to happen.
-			/delay 2s ${Zone.ID} != ${currentZone} || ${Me.Loc.Replace[ ,].NotEqual[${startingLoc}]} || ${Window[ConfirmationDialogBox].Open} || ${Window[LargeDialogWindow].Open}
+			| -Wait up to 3 seconds for something to happen.
+			/delay 30 ${Zone.ID} != ${currentZone} || ${Me.Loc.Replace[ ,].NotEqual[${startingLoc}]} || ${Window[ConfirmationDialogBox].Open} || ${Window[LargeDialogWindow].Open}
 
 			| -Click Yes to a confirmation box.
 			/if (${Window[ConfirmationDialogBox].Open}) {
@@ -326,12 +410,11 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 				/notify LargeDialogWindow LDW_YesButton leftmouseup
 				/delay 10
 			}
-
-      /doevents barkReturn
+			
 			| -Check to see if the bark was successful.
 			/call Triangulate_Distance ${Me.Loc.Replace[ ,]} ${startingLoc}
-
-			|/echo dist ${Macro.Return} barkret ${barkReturned} timer ${retryTimer}
+			
+			/doevents barkReturn
 
 			/if (${Zone.ID} == ${currentZone} && ${Macro.Return} < 50 && !${barkReturned}) {
 				/if (${retryTimer}) {
@@ -344,6 +427,7 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 		/deletevar barkTarget
 		/deletevar barkReturned
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_Bark -|
 /RETURN
 
@@ -351,123 +435,20 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 
 |------------------------------------------------------------|
 |- Attempts to detected NPC responses to PC hails in /say.	-|
-|- @param line: '|BarkTarget| says, 'Something''			      -|
-|- @param returnBark: What the NPC replied.					        -|
 |------------------------------------------------------------|
-#EVENT barkReturn "${barkTarget} #1#"
+|- @param line: '|BarkTarget| says, 'Something''			-|
+|- @param returnBark: What the NPC replied.					-|
+|------------------------------------------------------------|
+#EVENT barkReturn "|${barkTarget}| #*#"
 SUB EVENT_barkReturn(line, returnBark)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_barkReturn ==>
+	
 	/varset barkReturned TRUE
-	/echo returnBark ${returnBark}
+	
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_barkReturn -|
 /RETURN
 
-|----------------------------------------------------------------------------|
-|- Moves to a given location, and clicks the nearest object.				        -|
-|- @param ChatSender: The command sender.									                  -|
-|----------------------------------------------------------------------------|
-#EVENT clickIt "<#1#> Click It#*#"
-#EVENT clickIt "#1# tells the group, 'Click It'"
-#EVENT clickIt "#1# tell your party, 'Click It'"
-SUB EVENT_clickIt(line, ChatSender)
-	| -Verify the event
-  /call verifyEvent "${ChatSender}" "${line}"
-  /if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
-  /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-		/declare debug_clickit bool local FALSE
-		/if (${debug_clickit}) /echo ${ChatSender} ${Zone.ShortName} ${Ini[e3 Macro Inis\doors.ini,${Zone.ShortName},${Zone.ShortName}#1].Length}
-		/if (${debug_clickit} && ${ChatSender.Equal[${Me.Name}]}) /delay 5s
-    /if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /call interrupt
-		|**
-		| Move to the person who calls ClickIT
-		/if (${ChatSender.NotEqual[${Me.Name}]} && ${Spawn[pc =${ChatSender}].Distance3D} > 150) {
-			/echo \ay Aborting ClickIt: ${ChatSender} is > 150 away
-			/return
-		}
-		/if (${ChatSender.NotEqual[${Me.Name}]} && ${Spawn[pc =${ChatSender}].Distance3D} > 20) {
-			/declare moveToChatSenderTimer timer local 5s
-			/netfollow off
-			/stick off
-			/squelch /target id ${Spawn[pc =${ChatSender}].ID}
-			/squelch /face fast
-			/moveto id ${Spawn[pc =${ChatSender}].ID}
-			:continueMoveToChatSender
-			/delay 1
-			/if (${Spawn[pc =${ChatSender}].ID} > 20 && ${moveToChatSenderTimer}) /goto :continueMoveToChatSender
 
-			/if (${Spawn[pc =${ChatSender}].ID} > 20) {
-				/echo \ay Aborting ClickIt: Could not move to < 20 of ${ChatSender}
-				/moveto off
-				/return
-			}
-		}
-		**|
-		|load array of doors from doors.ini:  doorid, x, y, z, name
-		/call #InitoArray "e3 Macro Inis\doors.ini,${Zone.ShortName},${Zone.ShortName}#" doorList
-		/if (${debug_clickit}) /echo Doors in zone ${doorList.Size}
-		/declare i int local
-		/declare closestDoorID int local 0
-		/declare closestDoorDist float local 0
-		|find the closest door to me
-		/if (${doorList.Size} > 0) {
-      /for i 1 to ${doorList.Size}
-        /if (${debug_clickit}) /echo ${i} ${doorList[${i}]}
-        /squelch /doortarget id ${doorList[${i}].Arg[1,,]}
-        |/delay 1
-        /if ((${closestDoorDist}==0 || ${DoorTarget.Distance} < ${closestDoorDist}) && ${DoorTarget.Distance3D} < 100) {
-          /varset closestDoorDist ${DoorTarget.Distance}
-          /varset closestDoorID ${doorList[${i}].Arg[1,,]}
-        }
-      /next i
-    }
-		| if i have a door within 100 distance then move to it and try to click
-		/if (${debug_clickit}) /echo closest ${closestDoorID} ${closestDoorDist}
-		/if (!${Bool[${closestDoorID}]}) {
-		  /squelch /doortarget
-		  /if (${DoorTarget.Distance} < 150) {
-        /varset closestDoorID ${Switch.ID}
-				/if (${debug_clickit}) /echo no door in file, picked closest door ${Switch.ID}
-		  } else {
-        /echo \ay Aborting ClickIt: I could not find an acceptable door < 100 3D units
-        /return
-		  }
-
-		}
-		/squelch /doortarget id ${closestDoorID}
-		/if (${DoorTarget.Distance} > 20) {
-			/declare moveTimer timer local 5s
-			/netfollow off
-			/stick off
-			/squelch /face door fast
-			/moveto loc ${DoorTarget.Y} ${DoorTarget.X}
-			:continueMoveTo
-			/delay 1
-			/if (${DoorTarget.Distance} > 20 && ${Bool[${moveTimer}]}) /goto :continueMoveTo
-		}
-		/if (${DoorTarget.Distance} > 20) {
-			/echo \ay Aborting ClickIt: I could not moveto < 20 units of ${DoorTarget.Name} within 10s
-			/moveto off
-			/return
-		} else {
-			/declare MyZone int local ${Zone.ID}
-			/declare clickTimer timer local 5s
-			|add starting loc vs final loc for intrazone click
-			/declare clickDelay int local ${Math.Calc[${Math.Rand[${Me.ID}]}%${clickitRandomDelay}|1]}
-			/declare doorStartingDist ${DoorTarget.Distance3D}
-			:retryClickDoor
-			/delay ${clickDelay}
-      /squelch /doortarget id ${closestDoorID}
-			/squelch /click left door
-			/if (${clickTimer} && (${MyZone}==${Zone.ID} && ${Math.Abs[${doorStartingDist}-${DoorTarget.Distance3D}]} < 20)) /goto :retryClickDoor
-			/if (${MyZone}==${Zone.ID} && ${Math.Abs[${doorStartingDist}-${DoorTarget.Distance3D}]} < 20) {
-				/echo \ay I have failed to click Door ${Switch.ID} ${DoorTarget.Name}
-				/moveto off
-				/return
-			}
-		}
-	}
-/RETURN
 
 |----------------------------------------------------------------------------|
 |- Moves to a given location, and clicks the nearest object.				-|
@@ -475,84 +456,105 @@ SUB EVENT_clickIt(line, ChatSender)
 |- @param ChatSender: The command sender.									-|
 |- @param locToStart: Where to stand when attempting to click the object.	-|
 |----------------------------------------------------------------------------|
-#EVENT oldclickIt "<#1#> OldClickIt #2#"
-#EVENT oldclickIt "#1# tells the group, 'OldClickIt #2#'"
-#EVENT oldclickIt "#1# tell your party, 'OldClickIt #2#'"
-SUB EVENT_oldclickIt(line, ChatSender, locToStart)
-  /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_clickIt ==>
-| -Verify the event
-  /call verifyEvent "${ChatSender}" "${line}"
-  /if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
-  /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-    | -Check LoS.
-    /echo in oldclickit
-    /if (!${LineOfSight[${Me.Loc.Replace[ ,]}:${locToStart}]}) {
-      /docommand ${ChatToggle} I cannot see the object to click.
-    } else {
-      /if (${locToStart.Find[ ]}) /varset locToStart ${locToStart.Arg[1, ]}
-      | -Check range to object.
-      /call Triangulate_Distance ${locToStart} ${Me.Loc.Replace[ ,]}
-      /if (${Macro.Return} > ${Math.Calc[${MaxResponseDist}*3].Int}) {
-        /docommand ${ChatToggle} That object is too far away to click.
-      } else {
-        /declare retryTimer timer local 300
-        /declare miscTimer timer local
-        /declare startZone int local ${Zone.ID}
-        /if (${Stick.Active}) /squelch /stick off
-        /if (${NetAdvPath.Status}==1) /squelch /netfollow off
-        /if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /delay 300 !${Me.Casting.ID}
-        :retryClick
-        | -Check if I need to move closer.
-        /call Triangulate_Distance ${locToStart} ${Me.Loc.Replace[ ,]}
-        /if (${Macro.Return} > 10) {
-          /if (${retryTimer}) {
-            /call MoveTo -Loc|${locToStart}
-            /goto :retryClick
-          } else {
-            /docommand ${ChatToggle} I failed to move to the inteded object
-          }
-        } else {
-          | -Switch to first person camera.
-          /keypress First_Person_Camera
-          | -Face object and attempt to click it for up to 5 seconds.
-          /varset miscTimer 50
-          /squelch /doortarget
-          /squelch /face fast door
-          /squelch /look -75
-          :keypress
-          | -Shifts look angle up and down while attempting to click.
-          /look ${If[${Me.Look} < 120,${Math.Calc[${Me.Look} + 5]},-75]}
-          /if (${Target.ID}) /squelch /target clear
-          /keypress U
-          /delay 2
-          | -Check if I have zoned, or moved.
-          /call Triangulate_Distance ${locToStart} ${Me.Loc.Replace[ ,]}
-          /if (${Zone.ID} == ${currentZone} && ${Macro.Return} < 50) {
-            | -Check keypressTimer.
-            /if (${miscTimer}) {
-              /goto :keypress
-            } else {
-              | -Check the retryTimer.
-              /if (${retryTimer}) {
-                /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_clickIt -| Click attempt failed, retrying.
-                /keypress back hold
-                /delay 2
-                /keypress forward
-                /delay ${Math.Rand[30]}
-                /if (${retryTimer}) /goto :retryClick
-                | -If the retryTimer has expired, and I have not clicked the object.
-              } else {
-                /docommand ${ChatToggle} I have failed to click the object.
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_clickIt -|
+#EVENT clickIt "[#1#] Click object at #2#"
+#EVENT clickIt "<#1#> Click object at #2#"
+#EVENT clickIt "#1# tells you, 'Click object at #2#'"
+#EVENT clickIt "#1# tells the group, 'Click object at #2#'"
+#EVENT clickIt "#1# you tell your party, 'Click object at #2#'"
+SUB EVENT_clickIt(line, ChatSender, locToStart)
+/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_clickIt ==>
+
+	| -Verify the event
+	/call verifyEvent "${ChatSender}" "${line}"
+	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
+	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
+
+		| -Check LoS.
+		/if (!${LineOfSight[${Me.Loc.Replace[ ,]}:${locToStart}]}) {
+			/docommand ${ChatToggle} I cannot see the object to click.
+		} else {
+			
+			/if (${locToStart.Find[ ]}) /varset locToStart ${locToStart.Arg[1, ]}
+			
+			| -Check range to object.
+			/call Triangulate_Distance ${locToStart} ${Me.Loc.Replace[ ,]}
+			/if (${Macro.Return} > ${Math.Calc[${MaxResponseDist}*3].Int}) {
+				/docommand ${ChatToggle} That object is too far away to click.
+			} else {
+					
+				/declare retryTimer timer local 300
+				/declare miscTimer timer local
+				/declare startZone int local ${Zone.ID}
+
+				/if (${Stick.Active}) /squelch /stick off
+				/if (${NetAdvPath.State}==1) /squelch /netfollow off
+				/if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /delay 300 !${Me.Casting.ID}
+		
+				:retryClick
+				
+				| -Check if I need to move closer.
+				/call Triangulate_Distance ${locToStart} ${Me.Loc.Replace[ ,]}
+				/if (${Macro.Return} > 10) {
+					/if (${retryTimer}) {
+						/call MoveTo -Loc|${locToStart}
+						/goto :retryClick
+					} else {
+						/docommand ${ChatToggle} I failed to move to the inteded object
+					}
+				} else {
+				
+					| -Switch to first person camera.
+					/keypress First_Person_Camera
+				
+					| -Face object and attempt to click it for up to 5 seconds.
+					/varset miscTimer 50
+					/squelch /doortarget
+					/squelch /face fast door
+					/squelch /look -75
+
+					:keypress
+					
+					| -Shifts look angle up and down while attempting to click.
+					/look ${If[${Me.Look} < 75,${Math.Calc[${Me.Look} + 5]},-75]}
+					/if (${Target.ID}) /squelch /target clear
+					/keypress U
+					/delay 2
+					
+					| -Check if I have zoned, or moved.
+					/call Triangulate_Distance ${locToStart} ${Me.Loc.Replace[ ,]}
+					/if (${Zone.ID} == ${currentZone} && ${Macro.Return} < 50) {
+
+						| -Check keypressTimer.
+						/if (${miscTimer}) {
+							/goto :keypress
+						} else {
+						
+							| -Check the retryTimer.
+							/if (${retryTimer}) {
+								/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_clickIt -| Click attempt failed, retrying.
+								/keypress back hold
+								/delay 5
+								/keypress forward
+								/delay ${Math.Rand[30]}
+								
+								/if (${retryTimer}) /goto :retryClick
+						
+							| -If the retryTimer has expired, and I have not clicked the object.
+							} else {
+								/docommand ${ChatToggle} I have failed to click the object.
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_clickIt -|
 /RETURN
+
+
 
 |----------------------------------------------------------------------------|
 |- Points faces bots to your current heading, and runs through a zone line.	-|
@@ -561,9 +563,11 @@ SUB EVENT_oldclickIt(line, ChatSender, locToStart)
 |- @param locToStart: Where to stand when trying to click the door.			-|
 |- @param snapHeading: The direction to face when trying to click the door.	-|
 |----------------------------------------------------------------------------|
+#EVENT runThruZone "[#1#] Run through zone at #2#"
 #EVENT runThruZone "<#1#> Run through zone at #2#"
+#EVENT runThruZone "#1# tells you, 'Run through zone at #2#'"
 #EVENT runThruZone "#1# tells the group, 'Run through zone at #2#'"
-#EVENT runThruZone "#1# tell your party, 'Run through zone at #2#'"
+#EVENT runThruZone "#1# you tell your party, 'Run through zone at #2#'"
 SUB EVENT_runThruZone(line, ChatSender, eventParams)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_runThruZone ==>
 
@@ -591,7 +595,7 @@ SUB EVENT_runThruZone(line, ChatSender, eventParams)
 			} else {
 			
 				/if (${Stick.Active}) /squelch /stick off
-				/if (${NetAdvPath.Status}==1) /squelch /netfollow off
+				/if (${NetAdvPath.State}==1) /squelch /netfollow off
 				/if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /delay 300 !${Me.Casting.ID}
 			
 				:retryRTZ
@@ -638,47 +642,67 @@ SUB EVENT_runThruZone(line, ChatSender, eventParams)
 |----------------------------------------|
 |- Drops invis on connected NetBots.	-|
 |----------------------------------------|
-#EVENT dropInvis "<#1#> Drop Invis#*#"
+#EVENT dropInvis "[#1#] Drop Invis"
+#EVENT dropInvis "[#1#] Drop Invisibility"
+#EVENT dropInvis "<#1#> Drop Invis"
+#EVENT dropInvis "<#1#> Drop Invisibility"
+#EVENT dropInvis "#1# tells you, 'Drop Invis'"
+#EVENT dropInvis "#1# tells you, 'Drop Invisibility'"
+#EVENT dropInvis "#1# tells the group, 'Drop Invis'"
+#EVENT dropInvis "#1# tells the group, 'Drop Invisibility'"
+#EVENT dropInvis "<#1#> Drop Invis |/|#*#"
+#EVENT dropInvis "<#1#> Drop Invisibility |/|#*#"
+#EVENT dropInvis "#1# tells you, 'Drop Invis |/|#*#'"
+#EVENT dropInvis "#1# tells you, 'Drop Invisibility |/|#*#'"
+#EVENT dropInvis "#1# tells the group, 'Drop Invis |/|#*#'"
+#EVENT dropInvis "#1# tells the group, 'Drop Invisibility |/|#*#'"
 SUB EVENT_dropInvis(line, ChatSender)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_dropInvis ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-		/if (${Me.Invis}) /makemevisible
+	
+		/if (${Me.Invis}) {
+		
+			/if (${Target.ID}) /declare oldTarget int local ${Target.ID}
+			
+			/squelch /target clear
+			/attack on
+			/delay 30 ${Me.Combat}
+			/attack off 
+			
+			/if (${Defined[oldTarget]}) /call TrueTarget ${oldTarget}
+		}
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_dropInvis -|
 /RETURN
 
-|----------------------------------------|
-|- Drops invis on connected NetBots.	-|
-|----------------------------------------|
-#EVENT dropBuff "<#1#> Drop Buff #2#"
-SUB EVENT_dropBuff(line, ChatSender, buffName)
-  /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_dropInvis ==>
-| -Verify the event
-  /call verifyEvent "${ChatSender}" "${line}"
-  /if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
-  /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-    /removebuff ${buffName}
-  }
-  /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_dropInvis -|
-/RETURN
+
 
 |----------------------------------------------------|
-|- Uses /exit on all bots, except the ChatSender.	  -|
-|- Use, /bc Exit		                                -|
+|- Uses /exit on all bots, except the ChatSender.	-|
 |----------------------------------------------------|
-#EVENT Exit "<#1#> Exit#*#"
+|- Use, /bc Exit, or, -[Exit]- in any channel.		-|
+|----------------------------------------------------|
+#EVENT Exit "<#1#> Exit"
+#EVENT Exit "#1# tell you, 'Exit'"
+#EVENT Exit "#1# tells the group, 'Exit'"
+#EVENT Exit "<#1#> Exit |/|#*#"
+#EVENT Exit "#1# tell you, 'Exit |/|#*#'"
+#EVENT Exit "#1# tells the group, 'Exit |/|#*#'"
 SUB EVENT_Exit(line, ChatSender)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_Exit ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+
 		/docommand ${ChatToggle} Bye!
 		/if (${Spawn[${ChatSender}].ID}!=${Me.ID}) /exit
 	}
@@ -686,17 +710,29 @@ SUB EVENT_Exit(line, ChatSender)
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_Exit -|
 /RETURN
 
+
+
 |------------------------------------------------------------|
 |- Attempts to load the spellset listed in e3_Settings.ini.	-|
 |------------------------------------------------------------|
+#EVENT LoadSpells "[#1#] Load Spells"
 #EVENT LoadSpells "<#1#> Load Spells"
+#EVENT LoadSpells "#1# tells you, 'Load Spells'"
+#EVENT LoadSpells "#1# you tell your party, 'Load Spells'"
+#EVENT LoadSpells "#1# tells the group, 'Load Spells'"
+#EVENT LoadSpells "<#1#> Load Spells |/|#*#"
+#EVENT LoadSpells "#1# tells you, 'Load Spells |/|#*#'"
+#EVENT LoadSpells "#1# you tell your party, 'Load Spells |/|#*#'"
+#EVENT LoadSpells "#1# tells the group, 'Load Spells |/|#*#'"
 SUB EVENT_LoadSpells(line, ChatSender)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_LoadSpells ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+
 		| -Check if I can cast, and have a spellset.	
 		/if (${Me.Class.CanCast} && ${Defined[Default_SpellSet]}) {
 	
@@ -717,69 +753,130 @@ SUB EVENT_LoadSpells(line, ChatSender)
 /RETURN
 
 
-|------------------------------------------------------------|
-|- Checks for specified buffs and debuffs on NetBots.		-|
-|------------------------------------------------------------|
-|- Use, /bc Check Buff [Name], or /bc Check buff 'Name'.	-|
-|------------------------------------------------------------|
-#EVENT CheckBuffs "<#1#> Check buff #2#"
-SUB EVENT_CheckBuffs(line, ChatSender, eventParams)
-/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_CheckBuffs ==>
+	
+|----------------------------------------------------|
+|- Attempts to remove specified buffs on NetBots.	-|
+|----------------------------------------------------|
+|- Use, /bc Remove [Name], or /bc Remove 'Name'.	-|
+|----------------------------------------------------|
+#EVENT RemoveBuff "[#1#] Remove buff #2#"
+#EVENT RemoveBuff "<#1#> Remove buff #2#"
+#EVENT RemoveBuff "#1# tells you, 'Remove buff #2#'"
+#EVENT RemoveBuff "#1# tells the group, 'Remove buff #2#'"
+#EVENT RemoveBuff "#1# you tell your party, 'Remove buff #2#'"
+SUB EVENT_RemoveBuff(line, ChatSender, eventParams)
+/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_RemoveBuff ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
-		/declare buffName string local ${eventParams.Arg[1,-]}
-    /if (${Bool[${Me.Buff[${buffName}]}]}) {
-				/docommand ${ChatToggle} I have [${Me.Buff[${buffName}].Duration.TotalSeconds} seconds] left on [${Me.Buff[${buffName}]}].
-    }
+
+		/declare badBuff string local ${eventParams.Arg[1,-]}
+		/declare i int local
+
+		/for i 0 to 29
+			
+			/if (${Bool[${Window[BuffWindow].Child[BW_Buff${i}_Button].Tooltip}]} && ${Window[BuffWindow].Child[BW_Buff${i}_Button].Tooltip.Find[${badBuff}]}) {
+				/varset badBuff ${Window[BuffWindow].Child[BW_Buff${i}_Button].Tooltip.Arg[1,(]}
+				/varset badBuff ${badBuff.Left[${Math.Calc[${badBuff.Length}-1]}]}
+				/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_RemoveBuff -| Removing [${badBuff}]
+				/if (${Bool[${badBuff}]}) /nomodkey /notify BuffWindow Buff${Math.Calc[${Me.Buff[${badBuff}].ID}-1].Int} leftmouseup
+			}
+			
+		/next i
 	}
+
+/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_RemoveBuff -|
+/RETURN
+
+
+
+|------------------------------------------------------------|
+|- Checks for specified buffs and debuffs on NetBots.		-|
+|------------------------------------------------------------|
+|- Use, /bc Check Buff [Name], or /bc Check buff 'Name'.	-|
+|------------------------------------------------------------|
+#EVENT CheckBuffs "[#1#] Check buff #2#"
+#EVENT CheckBuffs "<#1#> Check buff #2#"
+#EVENT CheckBuffs "#1# tells you, 'Check buff #2#'"
+#EVENT CheckBuffs "#1# you tell your party, 'Check buff #2#'"
+#EVENT CheckBuffs "#1# tells the group, 'Check buff #2#'"
+SUB EVENT_CheckBuffs(line, ChatSender, eventParams)
+/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_CheckBuffs ==>
+
+	| -Verify the event
+	/call verifyEvent "${ChatSender}" "${line}"
+	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+	|    |-----------Valid User----------|    |--------Included Bot-----------|
+	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+	
+		/declare badBuff string local ${eventParams.Arg[1,-]}
+		/declare i int local
+
+		/for i 0 to 29
+			
+			/if (${Bool[${Window[BuffWindow].Child[BW_Buff${i}_Button].Tooltip}]} && ${Window[BuffWindow].Child[BW_Buff${i}_Button].Tooltip.Find[${badBuff}]}) {
+				/varset badBuff ${Window[BuffWindow].Child[BW_Buff${i}_Button].Tooltip.Arg[1,(]}
+				/varset badBuff ${badBuff.Left[${Math.Calc[${badBuff.Length}-1]}]}
+				/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_RemoveBuff -| Removing [${badBuff}]
+				/docommand ${ChatToggle} I have [${Math.Calc[${Me.Buff[${badBuff}].Duration} * 6 / 60].Int} minutes] left on [${badBuff}].
+			}
+			
+		/next i
+	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_CheckBuffs -|
 /RETURN
 
+
+
 |--------------------------------------------------------|
 |- Searches inventory, and banks, for indicated items.	-|
-|- Use, /bc Find 'Name', or, /echo Find 'Name'.			    -|
 |--------------------------------------------------------|
+|- Use, /bc Find 'Name', or, /echo Find 'Name'.			-|
+|--------------------------------------------------------|
+#EVENT FindItems "[#1#] Find Item #2#"
 #EVENT FindItems "<#1#> Find Item #2#"
+#EVENT FindItems "<#1#> Find Item #2# |/|#*#"
 SUB EVENT_FindItems(line, ChatSender, eventParams)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_FindItems ==>
+
 	| -Verify the event
-  /call #CreateVars string outer TempPart InclusionPart
-  /call #SplitInclusionArgs "${eventParams}" TempPart InclusionPart
-
-  /call #verifyEvent "${ChatSender}" "${line}"
-  /if (!${Macro.Return}) /return
-
-	|/call verifyEvent "${ChatSender}" "${line}"
-	|/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+	/call verifyEvent "${ChatSender}" "${line}"
+	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|
-	|/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+	
 		| -Declare counting variables.
 		/declare i int local
 		/declare e int local
 		/declare itemName string local
-    /declare ItemToFind string local ${TempPart}
-		|/declare ItemToFind string local ${eventParams.Arg[1,-]}
-		|/declare ItemToFind string local ${itemName}
+		/declare ItemToFind string local ${eventParams.Arg[1,-]}
+
 		/if (${FindItemCount[${ItemToFind}]} || ${FindItemBankCount[${ItemToFind}]} || ${Cursor.Name.Equal[${ItemToFind}]}) {
-			/docommand ${ChatToggle} >> Found (${Math.Calc[${FindItemCount[${ItemToFind}]} + ${FindItemBankCount[${ItemToFind}]}].Int}) examples of [${ItemToFind}] ..  <<
-			| wait for all chars to report item count before showing details
-			/delay 1s
+			
+			/docommand ${ChatToggle} >>> Found (${Math.Calc[${FindItemCount[${ItemToFind}]} + ${FindItemBankCount[${ItemToFind}]}].Int}) examples of [${ItemToFind}] in the following slots ... <<<
+			
+		
 			| -Check cursor.
 			/if (${Cursor.Name.Equal[${ItemToFind}]})  /docommand ${ChatToggle} >>> Found [${Cursor.Name}] -> [Cursor]. <<<
+			
 			| -Check Inventory.
 			/if (${FindItemCount[${ItemToFind}]}) {
+			
 				| -Search Equippped Items.
 				/for i 1 to 22
 					/varset itemName ${InvSlot[${i}].Item}
 					/if (${itemName.Find[${ItemToFind}]}) /docommand ${ChatToggle} [${InvSlot[${i}].Item}] -> (${InvSlot[${i}].Name})
 				/next i
+				
 				| -Search packslots.
 				/for i 1 to 8	
 					/varset itemName ${Me.Inventory[pack${i}]}
 					/if (${itemName.Find[${ItemToFind}]}) /docommand ${ChatToggle} [${Me.Inventory[pack${i}]}] -> (InvSlot${i})
+					
 					/if (${Me.Inventory[pack${i}].Container}) {
 						/for e 1 to ${Me.Inventory[pack${i}].Container}
 							/varset itemName ${Me.Inventory[pack${i}].Item[${e}]}
@@ -788,11 +885,14 @@ SUB EVENT_FindItems(line, ChatSender, eventParams)
 					}	
 				/next i
 			}
-      | -Search bank packslots.
+			
 			/if (${FindItemBankCount[${ItemToFind}]}) {
+			
+				| -Search bank packslots.
 				/for i 1 to 26	
 					/varset itemName ${Me.Bank[${i}]}
 					/if (${itemName.Find[${ItemToFind}]}) /docommand ${ChatToggle} [${Me.Bank[${i}]}] -> (BankSlot${i})
+					
 					/if (${Me.Bank[${i}].Container}) {
 						/for e 1 to ${Me.Bank[${i}].Container}
 							/varset itemName ${Me.Bank[${i}].Item[${e}]}
@@ -802,44 +902,30 @@ SUB EVENT_FindItems(line, ChatSender, eventParams)
 				/next i
 			}
 		}
-	|}
+	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_FindItems -|
 /RETURN
 
-|--------------------------------------------------------|
-|- Searches inventory, and banks, for indicated items.	-|
-| only characters missing the item will return msg
-|--------------------------------------------------------|
-|- Use, /bc Find 'Name', or, /echo Find 'Name'.			-|
-|--------------------------------------------------------|
-#EVENT FindMissingItem "<#1#> Find Missing Item #2#"
-SUB EVENT_FindMissingItem(line, ChatSender, eventParams)
-	/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_FindItems ==>
-  | -Verify the event
-  /call #CreateVars string outer TempPart InclusionPart
-  /call #SplitInclusionArgs "${eventParams}" TempPart InclusionPart
 
-  /call #verifyEvent "${ChatSender}" "${line}"
-  /if (!${Macro.Return}) /return
-  /declare ItemToFind string local ${TempPart}
-		|/declare ItemToFind string local ${eventParams.Arg[1,-]}
-
-		/if (${FindItemCount[=${ItemToFind}]} || ${FindItemBankCount[=${ItemToFind}]} || ${Cursor.Name.Equal[=${ItemToFind}]}) {
-      /if (${Debug} || ${Debug_Basics}) /echo found ${ItemToFind}
-      /return
-    } else {
-			/docommand ${ChatToggle} >> I did not find ${ItemToFind} ... <<
-    }
-	|}
-	/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_FindItems -|
-/RETURN
 
 |------------------------------------------------------------|
 |- Checks for bots who are out of range, or out of zone.	-|
 |------------------------------------------------------------|
 |- Use, /count, or, /bc Count bots							-|
 |------------------------------------------------------------|
+#EVENT CountBots "[#*#] Count"
+#EVENT CountBots "<#*#> Count"
+#EVENT CountBots "[#*#] Count Bots"
+#EVENT CountBots "<#*#> Count Bots"
+#EVENT CountBots "[#*#] RollCall"
+#EVENT CountBots "<#*#> RollCall"
+#EVENT CountBots "[#*#] Roll Call"
+#EVENT CountBots "<#*#> Roll Call"
+#EVENT CountBots "[#*#] HeadCount"
+#EVENT CountBots "<#*#> HeadCount"
 #EVENT CountBots "[#*#] Head Count"
+#EVENT CountBots "<#*#> Head Count"
 SUB EVENT_CountBots
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_CountBots ==>
 
@@ -919,14 +1005,17 @@ SUB EVENT_CountBots
 #EVENT Swap_Items "[MQ2] Swap #1#"
 SUB EVENT_Swap_Items(line, IniEntry)
 /if (${Debug} || ${Debug_Basics}) /echo |- Event Swap_Items ==>
+
 	| If I don't have a matching Ini entry.
 	/if (!${Ini[${Character_Ini},Swap Items,${IniEntry}].Length}) {
-		/echo \ay << Swap_Items: I have no listing for [${IniEntry}]. >>
+		/echo |- Swap_Items -| I have no listing for [${IniEntry}].
 	} else {
+	
 		/if (${Cursor.ID}) /call ClearCursor
 		/if (${Bool[${Me.Casting}]} && ${Me.Class.ShortName.NotEqual[BRD]}) /delay 300 !${Bool[${Me.Casting}]}
 	
 		/declare i int local 1
+		
 		/declare itemToSwap string local
 		/declare slotToSwap string local
 		
@@ -942,45 +1031,35 @@ SUB EVENT_Swap_Items(line, IniEntry)
 			/varcalc i + 1
 			/if (${Ini[${Character_Ini},Swap Items,${IniEntry}].Arg[${i},/].Length}) /goto :SwapLoop
 		} else {
+		
 			| If I'm swapping in a 2 hander, while dual wielding.
-			/if (${slotToSwap.Equal[Mainhand]} && ${FindItem[${itemToSwap}].Type.Left[2].Equal[2H]} && ${Bool[${InvSlot[Offhand].Item}]}) {
-			  /unequip Offhand
-			  /delay 2
-			  /call PlaceInFirstFreeSlot
-      }
-      /if (${slotToSwap.Equal[Mainhand]} && ${FindItem[${itemToSwap}].ItemSlot}==14) {
-        /unequip Offhand
-        /delay 2
-        /call PlaceInFirstFreeSlot
-      }
-      /if (${slotToSwap.Equal[Offhand]} && ${FindItem[${itemToSwap}].ItemSlot}==13) {
-        /unequip Mainhand
-        /delay 2
-        /call PlaceInFirstFreeSlot
-      }
+			/if (${slotToSwap.Equal[Mainhand]} && ${FindItem[${itemToSwap}].Type.Left[2].Equal[2H]} && ${Bool[${InvSlot[Offhand].Item}]}) /unequip Offhand
+		
 			| Swap in item.
-      /if (${Debug} || ${Debug_Basics}) /echo Equipping [${itemToSwap}] ${slotToSwap}
+			/echo Equipping [${itemToSwap}]
 			/call SwapItem "${itemToSwap}" ${slotToSwap}
-			/delay 2
+			
 			/varcalc i ${i} + 1
 			/if (${Ini[${Character_Ini},Swap Items,${IniEntry}].Arg[${i},/].Length}) /goto :SwapLoop
 		}
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== Swap_Items -|
 /RETURN
 
 
-#EVENT castItem "[MQ2] Cast Item #1#"
-SUB EVENT_castItem(line, itemToUse)
+
+#EVENT useItem "[MQ2] Use Item #1#"
+SUB EVENT_useItem(line, itemToUse)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_useItem ==>
+
 	/if (${Bool[${Cursor}]}) /call ClearCursor
-  /echo ${itemToUse}
+
 	:TryAgain
 	| if I cant find the item
-	/if (${FindItemCount[${itemToUse}]}==0) {
-		|/echo ${FindItemCount[${itemToUse}]}
+	/if (!${FindItemCount[=${itemToUse}]}) {
+	
 		| check ini for an alias
-		|/echo ${Character_Ini} ${Ini[${Character_Ini},Use Items,${itemToUse}].Length}
 		/if (${Ini[${Character_Ini},Use Items,${itemToUse}].Length}) {
 			/varset itemToUse ${Ini[${Character_Ini},Use Items,${itemToUse}]}
 			/goto :TryAgain
@@ -988,21 +1067,26 @@ SUB EVENT_castItem(line, itemToUse)
 			/echo Could not find [${itemToUse}].
 		}
 	} else {
+		
 		| check item timers
-		/if (${FindItem[${itemToUse}].Timer} || ${itemTimer_${FindItem[${itemToUse}].ID}}) {
-			/echo [${itemToUse}] is not ready! [${If[${FindItem[${itemToUse}].Timer},${FindItem[${itemToUse}].Timer} ticks,${Math.Calc[${itemTimer_${FindItem[${itemToUse}].ID}}/10].Int} sec]}]
+		/if (${FindItem[=${itemToUse}].Timer} || ${itemTimer_${FindItem[=${itemToUse}].ID}}) {
+			/echo [${itemToUse}] is not ready! [${If[${FindItem[=${itemToUse}].Timer},${FindItem[=${itemToUse}].Timer} ticks,${Math.Calc[${itemTimer_${FindItem[=${itemToUse}].ID}}/10].Int} sec]}]
 		} else {
+
 			| cast the item
 			/if (${Me.Casting.ID}) /call Interrupt
 			/if (${Cursor.ID}) /call clearCursor
 			/if (${Target.ID}) /declare oldTarget int local ${Target.ID}
-			|/echo calling cast
-			/casting "${itemToUse}|item" "-targetid|${Me.ID}"
+
+			/call e3_Cast ${Me.ID} "${itemToUse}" item
 			/if (${oldTarget}) /call TrueTarget ${oldTarget}
 		}
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_useItem -|
 /RETURN
+
+
 
 |----------------------------------------------------|
 |- Ends the macro before a bot finishes camping.	-|
@@ -1018,48 +1102,65 @@ SUB EVENT_EndMacro
 |------------------------------------------------|
 |- Engages MedBreak mode, on bots who can cast.	-|
 |------------------------------------------------|
+#EVENT medOn "[#1#] MedBreak On#*#"
 #EVENT medOn "<#1#> MedBreak On#*#"
+#EVENT medOn "#1# tells you, 'MedBreak On#*#'"
+#EVENT medOn "#1# tells the group, 'MedBreak On#*#'"
+#EVENT medOn "#1# you tell your party, 'MedBreak On#*#'"
 SUB EVENT_medOn(line, ChatSender)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_medOn ==>
-	| -Verify the event
-	/call verifyEvent "${ChatSender}" "${line}"
-	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|		|-----------In Range-------------|
-	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-		| Check that I'm a caster, and not a bard
-|		/if (${Me.Class.CanCast} && ${Me.Class.ShortName.NotEqual[BRD]}) {
-		/if (${Me.Class.ShortName.NotEqual[BRD]} && ${Me.Class.ShortName.NotEqual[WAR]}) {	
-			| Check range
-			/if (${Spawn[pc ${ChatSender}].Distance} < ${MaxResponseDist}) {
-				/docommand ${ChatToggle} Meditating...
-        | Set medbreak variables
-        /varset medBreak TRUE
-        /if (${line.Find[ Hold]}) {
-          /varset medBreak_Hold TRUE
-        } else {
-          /varset medBreak_Hold FALSE
-        }
-			} else {
-				/docommand ${ChatToggle} I am too far away from you to meditate
-			}
-		}
-	}
-/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_medOn -|
-/RETURN
 
-|----------------------------------------------------|
-|- disengages MedBreak mode, on bots who can cast.	-|
-|----------------------------------------------------|
-#EVENT medOff "<#1#> MedBreak Off#*#"
-SUB EVENT_medOff(line, ChatSender)
-/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_medOff ==>
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]}) {
+	
+		| Check that I'm a caster, and not a bard
+		/if (${Me.Class.CanCast} && ${Me.Class.ShortName.NotEqual[BRD]}) {
+	
+			| Set medbreak variables
+			/varset medBreak TRUE
+			/if (${line.Find[ Hold]}) {
+				/varset medBreak_Hold TRUE
+			} else {
+				/varset medBreak_Hold FALSE
+			}
+			
+			| Check range
+			/if (${Spawn[pc ${ChatSender}].Distance} < ${MaxResponseDist}) {
+				/docommand ${ChatToggle} Meditating...
+			} else {
+				/docommand ${ChatToggle} I am too far away from you to meditate, right now.  I'll start meditating when you're in range.
+			}
+		}
+	}
+	
+/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_medOn -|
+/RETURN
+
+
+
+|----------------------------------------------------|
+|- disengages MedBreak mode, on bots who can cast.	-|
+|----------------------------------------------------|
+#EVENT medOff "[#1#] MedBreak Off#*#"
+#EVENT medOff "<#1#> MedBreak Off#*#"
+#EVENT medOff "#1# tells you, 'MedBreak Off#*#'"
+#EVENT medOff "#1# tells the group, 'MedBreak Off#*#'"
+#EVENT medOff "#1# you tell your party, 'MedBreak Off#*#'"
+SUB EVENT_medOff(line, ChatSender)
+/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_medOff ==>
+
+	| -Verify the event
+	/call verifyEvent "${ChatSender}" "${line}"
+	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|
+	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]}) {
+
 		| If medbreak is engaged
 		/if (${medBreak}) {
+	
 			| Reset variables, and stand up
 			/docommand ${ChatToggle} Ending Medbreak.
 			/varset medBreak FALSE
@@ -1067,6 +1168,7 @@ SUB EVENT_medOff(line, ChatSender)
 			/if (${Me.Sitting}) /stand
 		}
 	}
+	
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_medOff -|
 /RETURN
 
@@ -1082,43 +1184,45 @@ SUB check_MedBreak
 /if (${Debug} || ${Debug_Basics}) /echo |- check_MedBreak ==>
 
 	| If I'm following, check distance to follow target
-	/if (${Following} && ${SpawnCount[pc =${FollowTarget}]} && ${Spawn[pc =${FollowTarget}].Distance} < ${LeashLength}  && !${Me.Moving}) {
+	/if (${Following} && ${SpawnCount[pc ${FollowTarget}]} && ${Spawn[pc ${FollowTarget}].Distance} > ${LeashLength}  && !${Me.Moving}) {
 		/call check_Follow
-		/delay 10 ${Me.Moving}
+		/delay 30 ${Me.Moving}
 	}
+	
 	| If I'm not moving disengage any active follow plugins
-	/if (!${Me.Moving} && (${Stick.Active} || ${NetAdvPath.Status}==1)) {
+	/if (!${Me.Moving}) {
 		/if (${Stick.Active}) /squelch /stick off
-		/if (${NetAdvPath.Status}==1) /squelch /netfollow off
+		/if (${NetAdvPath.State}) /squelch /netfollow off
 	}
+	
 	| If End MedBreak in Combat (On/Off)=On, and a netbot is in combat, call medOff
-	/if (${medOn_combatBreak} && ${Me.CombatState.Equal[COMBAT]}) {
-    /docommand ${ChatToggle} Ending Medbreak.
-    /varset medBreak FALSE
-    /varset medBreak_Hold FALSE
-    /if (${Me.Sitting}) /stand
-	}
-
+	/if (${medOn_combatBreak} && ${combatTimer}) /call EVENT_medOff "NULL" "${Me.CleanName}"
+	
 	/if (!${Me.Feigning}) {
+	
 		| do ***Meditating*** popup
 		/if (!${medbreak_Popup_Timer}) {
 			/popup ***Meditating***
 			/varset medbreak_Popup_Timer 30
 		}
+		
 		| sit down, if we are not sitting
 		/if (!${Me.Sitting} && !${Me.Casting.ID} && !${Me.Moving}) /sit
+		
 		| end MedBreak when we are full mana, unless hold is engaged
-		/if (${medBreak} && !${medBreak_Hold} && (${Me.PctMana} >= 99 || ${Me.PctMana}==0) && ${Me.PctEndurance}>=99) {
-			/docommand ${ChatToggle} Full Mana/Endurance, ending MedBreak.
+		/if (${medBreak} && ${Me.PctMana} >= 99 && !${medBreak_Hold}) {
+			/docommand ${ChatToggle} I am at full mana, ending MedBreak.
 			/if (${Me.Sitting}) /stand
 			/varset medBreak FALSE
-			/varset medBreak_Hold FALSE				
-		}	
+			/varset medBreak_Hold FALSE
+		}
 	}
+	
 /if (${Debug} || ${Debug_Basics}) /echo <== check_MedBreak -|
 /RETURN
 
-|--------------------------------------------------------------------------------|
+
+
 #EVENT set_AAXP "<#1#> Set AA XP #2#"
 #EVENT set_AAXP "[#1#] Set AA XP #2#"
 SUB EVENT_set_AAXP(line, ChatSender, eventParams)
@@ -1140,7 +1244,8 @@ SUB EVENT_set_AAXP(line, ChatSender, eventParams)
 /if (${Debug} || ${Debug_Basics}) /echo <== set_AAXP -|
 /RETURN
 
-|--------------------------------------------------------------------------------|
+
+
 #EVENT fixCorpses "<#*#> Fix Corpses"
 SUB EVENT_fixCorpses
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_fixCorpses ==>
@@ -1155,6 +1260,8 @@ SUB EVENT_fixCorpses
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_fixCorpses -|
 /RETURN
 
+
+
 |----------------------------------------|
 |- Consents a PC to drag your corpse.	-|
 |----------------------------------------|
@@ -1162,6 +1269,7 @@ SUB EVENT_fixCorpses
 #event Consent "<#1#> Consent #2#"
 SUB Event_Consent(line, ChatSender, ConsentTarget)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_Consent ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
@@ -1173,8 +1281,11 @@ SUB Event_Consent(line, ChatSender, ConsentTarget)
 			/consent ${ConsentTarget}
 		}
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_Consent -|
 /RETURN
+
+
 
 |--------------------------------------------------------------------------------------------|
 |- Adds a PC name to your list of consentTargets.  This is used is corpse drag functions.	-|
@@ -1190,6 +1301,8 @@ SUB event_addConsent(line, consentTarget)
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_addConsent -|
 /RETURN
 
+
+
 |--------------------------------------------------------------------------------|
 |- Clears your list of PCs who have consented to have you move their corpse.	-|
 |--------------------------------------------------------------------------------|
@@ -1200,31 +1313,51 @@ SUB event_flushConsent
 	/if (${Defined[consentTargets]}) /varset consentTargets ${Me.CleanName}
 /RETURN
 
-|--------------------------------------------------------------------------------|
+
+
+#event gatherCorpses "[MQ2] Ping corpses"
 #event gatherCorpses "[MQ2] Gather corpses"
 #event gatherCorpses "[MQ2] Gather corpse"
 SUB event_gatherCorpses
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_gatherCorpses ==>
-  /bc Consent ${Me.CleanName}
+
+	/declare miscTimer timer local
 	/declare i int local
 	/for i 1 to ${SpawnCount['s radius 100]}
-		/if (${Select[${Spawn[${NearestSpawn[${i},pccorpse radius 100]}].CleanName.Arg[1,']},${consentTargets}]}) {
-			/call TrueTarget ${Spawn[${NearestSpawn[${i},pccorpse radius 100]}].ID}
-			/delay 2
+		/if (${Select[${Spawn[${NearestSpawn[${i},'s radius 100]}].CleanName.Arg[1,']},${consentTargets}]}) {
+			
+			/call TrueTarget ${Spawn[${NearestSpawn[${i},'s radius 100]}].ID}
+			/varset miscTimer 30
+			
+			:tryAgain
 			/corpse
 			/delay 10 ${Target.Distance} < 20
+			/if (${miscTimer} && ${Target.Distance} > 20) /goto :tryAgain
 		}
 	/next i
+		
 	/squelch /target clear
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_gatherCorpses -|
 /RETURN
+
+
 
 |-------------------------------
 |- All bots click yes or no to confirmation boxes.
 |-------------------------------
+#EVENT ClickYes	"[#1#] Click #2#"
 #EVENT ClickYes	"<#1#> Click #2#"
+#EVENT ClickYes	"#1# tells you, 'Click #2#'"
+#EVENT ClickYes	"#1# you tell your party, 'Click #2#'"
+#EVENT ClickYes	"#1# tells the group, 'Click #2#'"
+#EVENT ClickYes	"<#1#> Click #2#"
+#EVENT ClickYes	"#1# tells you, 'Click #2#'"
+#EVENT ClickYes	"#1# you tell your party, 'Click #2#'"
+#EVENT ClickYes	"#1# tells the group, 'Click #2#'"
 SUB EVENT_ClickYes(line, ChatSender, eventParams)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_ClickYes ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
@@ -1244,6 +1377,7 @@ SUB EVENT_ClickYes(line, ChatSender, eventParams)
 			/if (${Window[ConfirmationDialogBox].Open} || ${Window[LargeDialogWindow].Open}) /goto :clickButton
 		}
 	}
+
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_ClickYes -|	
 /RETURN
 
@@ -1254,10 +1388,15 @@ SUB EVENT_ClickYes(line, ChatSender, eventParams)
 |--------------------------------------------------------|
 |- Use, /bc gate, /tell 'Name' [Gate], or, /g [Gate].	-|
 |--------------------------------------------------------|
+#EVENT gate "[#1#] Gate"
 #EVENT gate	"<#1#> Gate"
 #EVENT gate "#1# tells you, 'Gate'"
-#EVENT gate "#1# tell your party, 'Gate'"
+#EVENT gate "#1# you tell your party, 'Gate'"
 #EVENT gate "#1# tells the group, 'Gate'"
+#EVENT gate	"<#1#> Gate |/|#*#"
+#EVENT gate "#1# tells you, 'Gate |/|#*#'"
+#EVENT gate "#1# you tell your party, 'Gate |/|#*#'"
+#EVENT gate "#1# tells the group, 'Gate |/|#*#'"
 SUB EVENT_gate(line, ChatSender)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_Gate ==>
 
@@ -1297,21 +1436,21 @@ SUB EVENT_gate(line, ChatSender)
 #EVENT Evacuate "[#1#] Evac"
 #EVENT Evacuate	"<#1#> Evac"
 #EVENT Evacuate "#1# tells you, 'Evac'"
-#EVENT Evacuate "#1# tell your party, 'Evac'"
+#EVENT Evacuate "#1# you tell your party, 'Evac'"
 #EVENT Evacuate "#1# tells the group, 'Evac'"
 #EVENT Evacuate "[#1#] Evacuate"
 #EVENT Evacuate	"<#1#> Evacuate"
 #EVENT Evacuate "#1# tells you, 'Evacuate'"
-#EVENT Evacuate "#1# tell your party, 'Evacuate'"
+#EVENT Evacuate "#1# you tell your party, 'Evacuate'"
 #EVENT Evacuate "#1# tells the group, 'Evacuate'"
 
 #EVENT Evacuate	"<#1#> Evac |/|#*#"
 #EVENT Evacuate "#1# tells you, 'Evac |/|#*#'"
-#EVENT Evacuate "#1# tell your party, 'Evac |/|#*#'"
+#EVENT Evacuate "#1# you tell your party, 'Evac |/|#*#'"
 #EVENT Evacuate "#1# tells the group, 'Evac |/|#*#'"
 #EVENT Evacuate	"<#1#> Evacuate |/|#*#"
 #EVENT Evacuate "#1# tells you, 'Evacuate |/|#*#'"
-#EVENT Evacuate "#1# tell your party, 'Evacuate |/|#*#'"
+#EVENT Evacuate "#1# you tell your party, 'Evacuate |/|#*#'"
 #EVENT Evacuate "#1# tells the group, 'Evacuate |/|#*#'"
 SUB EVENT_Evacuate(line, ChatSender)
 /if (${Select[${Me.Class.ShortName},DRU,WIZ]}) {
@@ -1326,10 +1465,10 @@ SUB EVENT_Evacuate(line, ChatSender)
 		| -Attempt to evac.
 		/if (${Me.AltAbilityReady[Exodus]}) {
 			/docommand ${ChatToggle} Evacuating!
-			/casting "Exodus" alt
+			/call e3_Cast ${Me.ID} "Exodus" alt
 		} else /if (${Me.Book[${Evac_Spell.Arg[1,/]}]}) {
 			/docommand ${ChatToggle} Evacuating!
-			/casting "${Evac_Spell.Arg[1,/]}"
+			/call e3_Cast ${Me.ID} "${Evac_Spell.Arg[1,/]}/GiveUpTimer|30s"
 		} else {
 			/docommand ${ChatToggle} I am not able to Evac at this time.
 		}
@@ -1346,9 +1485,9 @@ SUB EVENT_Evacuate(line, ChatSender)
 |----------------------------------------|
 #EVENT RaidAccept "#*#invites you to join a raid.#*#"
 SUB EVENT_RaidAccept
-  /delay 1s
 	/raidaccept
 /RETURN
+
 
 
 |--------------------------------------------|
@@ -1395,40 +1534,45 @@ SUB EVENT_Force_RaidDisband
 /if (${Debug} || ${Debug_Basics}) /echo <== Force_RaidDisband -|
 /RETURN
 
+
+
 |----------------------------------------|
 |- Automatically accepts group invites.	-|
 |----------------------------------------|
 #EVENT Invite "#1# invites you to join a group."
 SUB EVENT_Invite(line, ChatSender)
 /if (${Debug}) /echo |- EVENT_Invite ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]}) {
+	
 		| -Wait to finish casting
-		/if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /stopcast
-		/delay 10 !${Me.Casting.ID}
-		/squelch /target clear
-
-		/declare retryTimer timer local 5s
+		/if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /delay 300 !${Me.Casting.ID}
+	
+		| -If the groupleader was valid, disband a current group, and join the new one.
+		| /if (${Group} || ${Raid.Members}) /call EVENT_Disband
+		
+		/declare retryTimer timer local 150
 		
 		:retry_Invite
-|		/if (${Debug}) /echo |- EVENT_Invite -| retry_Invite loop.
+		/if (${Debug}) /echo |- EVENT_Invite -| retry_Invite loop.
 		
-		/delay 5
+		/call Background_Events
 		/invite
-		/delay 1s ${Group}
+		/delay 5 ${Group}
 		
 		/if (!${Group}) {
 			/if (${retryTimer}) {
-				/delay 1s
 				/goto :retry_Invite
 			} else {
 				/echo Failed to join the group.
 			}
 		}
-	}
+	}	
+
 /if (${Debug}) /echo <== EVENT_Invite -|
 /RETURN
 
@@ -1443,32 +1587,37 @@ SUB EVENT_Invite(line, ChatSender)
 #EVENT Disband "<#1#> Disband all"
 SUB EVENT_Disband(line, ChatSender)
 /if (${Debug}) /echo |- EVENT_Disband ==>
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]}) {
+	
 		| -Wait to stop casting.
-    /if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /stopcast
-    /delay 2 !${Me.Casting.ID}
+		/if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /delay 300 !${Me.Casting.ID}
+	
 		| -Disband from a raid.
 		/if (${Raid.Members}) {
 			/call TrueTarget ${Me.ID}
-			/delay 2
-			/if (${Raid.Leader.Name.Equal[${Me}]}) /delay 3
 			/raiddisband
-			/delay 1s !${Raid.Members}
+			/delay 10 !${Raid.Members}
 		}
+		
 		| -Disband from a group.
-		/if (${Group} && !${Group.Leader.Name.Equal[${Me}]}) {
+		/if (${Group}) {
 			/call TrueTarget ${Me.ID}
-			/delay 2
 			/disband
-			/delay 1s !${Group}
+			/delay 10 !${Group}
 		}
+		
+		/squelch /target clear
 	}
+
 /if (${Debug}) /echo <== EVENT_Disband -|
 /RETURN
+
+
 
 |--------------------------------------------------------------------------------------------|
 |- Groupleaders save current group formations to the Groups.ini file, to be recalled later.	-|
@@ -1490,7 +1639,7 @@ SUB EVENT_saveGroup(line, ChatSender, eventParams)
 		} else {
 			
 			/echo Preparing to save...
-			/declare groupName string local ${eventParams.Arg[1,/]}
+			/declare groupName string local ${eventParams.Arg[1,/]]}
 			/if (${groupName.Right[1].Equal[ ]}) /varset groupName ${groupName.Left[${Math.Calc[${groupName.Length}-1]}]}
 			/delay ${Math.Calc[${NetBots[${Me.CleanName}]} * 3].Int}
 			/declare uniqueID int local
@@ -1596,207 +1745,76 @@ SUB EVENT_listGroups
 SUB EVENT_groupUp(line, ChatSender, eventParams)
 /if (${Debug}) /echo |- EVENT_groupUp ==>
 
-| -Verify the event
-  /call verifyEvent "${ChatSender}" "${line}"
-  /varset ChatSender ${Macro.Return.Arg[1,_]}
-|    |-----------Valid User----------|    |--------Included Bot-----------|
-  /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+	| -Verify the event
+	/call verifyEvent "${ChatSender}" "${line}"
+	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+	|    |-----------Valid User----------|    |--------Included Bot-----------|
+	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+		
+		/declare groupName string local ${eventParams.Arg[1,/]}
+		/if (${groupName.Right[1].Equal[ ]}) /varset groupName ${groupName.Left[${Math.Calc[${groupName.Length}-1]}]}
+		/declare groupFound string local
+		/declare groupMembers[5] string local
+		/declare groupSize int local
+		
+		/declare i int local 1
+		/declare e int local
+		
+		| -Check for groupName in Group_Ini.
+		:nextGroupListing
+		/if (${Ini[${Group_Ini}].Arg[${i},|].Arg[2,_].Equal[${groupName}]} && ${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#0].NotEqual[DEPRECATED]}) {
+			| Disband from a current group
+			/if (${Group}) /call EVENT_Disband "PLACEHOLDER" "${Me.CleanName}"
+				
+			| check to see if I am the group leader(GroupMember#0)
+			/if (${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#0].Equal[${Me.CleanName}]}) {
+				/echo Recalling [${groupName}]...
+				/delay 20
+				| Invite group members while ignoring placeholders, and set 
+				/for e 1 to 5
+					/varset groupMembers[${e}] ${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#${e}]}
+					/if (${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#${e}].NotEqual[PLACEHOLDER]}) {
+						/varcalc groupSize ${groupSize}+1
+						| -Alert PC of incoming group invite.
+						/invite ${groupMembers[${e}]}
+					}
+				/next e
 
-    /if (${ChatSender.Equal[${Me.Name}]}) {
-      /squelch /bca //raiddisband
-      /squelch /bca //disband
-      /delay 5
-      /if (${Raid.Members}) /raiddisband
-    }
-    /delay 5
-
-    /declare groupName string local ${eventParams.Arg[1,/]}
-    /if (${groupName.Right[1].Equal[ ]}) /varset groupName ${groupName.Left[${Math.Calc[${groupName.Length}-1]}]}
-    /declare groupFound string local
-    /declare groupMembers[5] string local
-    /declare groupSize int local
-
-    /declare i int local 1
-    /declare e int local
-
-    | -Check for groupName in Group_Ini.
-    :nextGroupListing
-    /if (${${IniMode}[${Group_Ini}].Arg[${i},|].Arg[2,_].Equal[${groupName}]} && ${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#0].NotEqual[DEPRECATED]}) {
-      | Disband from a current group
-      /if (${Group}) /call EVENT_Disband "PLACEHOLDER" "${Me.CleanName}"
-
-      | check to see if I am the group leader(GroupMember#0)
-      /if (${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#0].Equal[${Me.CleanName}]}) {
-        /echo Recalling [${groupName}]...
-        /delay 15
-        | Invite group members while ignoring placeholders, and set
-        /for e 1 to 5
-        /varset groupMembers[${e}] ${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}]}
-        /if (${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}].NotEqual[PLACEHOLDER]}) {
-          /varcalc groupSize ${groupSize}+1
-          | -Alert PC of incoming group invite.
-          /invite ${groupMembers[${e}]}
-        }
-        /next e
-
-        /delay 6s ${Group} == ${groupSize}
-        /if (${Group} != ${groupSize}) {
-          /for e 1 to 5
-          /if (${groupMembers[${e}].NotEqual[PLACEHOLDER]} && !${Bool[${Group.Member[${groupMembers[${e}]}]}]}) /docommand ${ChatToggle} [${groupMembers[${e}]}] Did not join the group...
-          /next e
-        }
-        /goto :skip
-      }
-    }
-    /varcalc i ${i}+1
-    /if (${${IniMode}[${Group_Ini}].Arg[${i},|].Length}) /goto :nextGroupListing
-  }
-  :skip
+				/delay 100 ${Group} == ${groupSize}
+				/if (${Group} != ${groupSize}) {
+					/for e 1 to 5
+						/if (${groupMembers[${e}].NotEqual[PLACEHOLDER]} && !${Group.Member[${groupMembers[${e}]}]}) /docommand ${ChatToggle} [${groupMembers[${e}]}] Did not join the group...
+					/next e
+				}
+				/goto :skip
+			}
+		}
+		/varcalc i ${i}+1
+		/if (${Ini[${Group_Ini}].Arg[${i},|].Length}) /goto :nextGroupListing
+	}
 :skip
 /if (${Debug}) /echo <== EVENT_groupUp -|
 /RETURN
 
-|** #EVENT groupUp "<#1#> Group #2#"
-SUB EVENT_groupUp(line, ChatSender, eventParams)
-  /debug main |- EVENT_groupUp ==>
 
-| -Verify the event
-  /call verifyEvent "${ChatSender}" "${line}"
-  /varset ChatSender ${Macro.Return.Arg[1,_]}
-|    |-----------Valid User----------|    |--------Included Bot-----------|
-  /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
-
-    /if (${ChatSender.Equal[${Me.Name}]}) {
-      /if (${Raid.Leader}) {
-        /bca //raiddisband
-        /delay 2s
-        /raiddisband
-      } else {
-        /delay 3s
-      }
-      /bca //disband
-      /delay 2s
-    }
-
-    /declare groupName string local ${eventParams.Arg[1,/]}
-    /if (${groupName.Right[1].Equal[ ]}) /varset groupName ${groupName.Left[${Math.Calc[${groupName.Length}-1]}]}
-    /declare groupFound string local
-    /declare groupMembers[5] string local
-    /declare groupSize int local
-
-    /declare i int local 1
-    /declare e int local
-
-    | -Check for groupName in Group_Ini.
-    :nextGroupListing
-    /if (${${IniMode}[${Group_Ini}].Arg[${i},|].Arg[2,_].Equal[${groupName}]} && ${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#0].NotEqual[DEPRECATED]}) {
-      | Disband from a current group
-      /if (${Group}) /call EVENT_Disband "PLACEHOLDER" "${Me.CleanName}"
-
-      | check to see if I am the group leader(GroupMember#0)
-      /if (${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#0].Equal[${Me.CleanName}]}) {
-        /echo Recalling [${groupName}]...
-        /delay 20
-        | Invite group members while ignoring placeholders, and set
-        /for e 1 to 5
-        /varset groupMembers[${e}] ${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}]}
-        /if (${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}].NotEqual[PLACEHOLDER]}) {
-          /varcalc groupSize ${groupSize}+1
-          | -Alert PC of incoming group invite.
-          /invite ${groupMembers[${e}]}
-        }
-        /next e
-
-        /delay 4s ${Group} == ${groupSize}
-        /if (${Group} != ${groupSize}) {
-          /for e 1 to 5
-            /if (${groupMembers[${e}].NotEqual[PLACEHOLDER]} && !${Group.Member[${groupMembers[${e}]}]}) /docommand ${ChatToggle} [${groupMembers[${e}]}] Did not join the group...
-          /next e
-        }
-        /goto :skip
-      }
-    }
-    /varcalc i ${i}+1
-    /if (${${IniMode}[${Group_Ini}].Arg[${i},|].Length}) /goto :nextGroupListing
-  }
-  :skip
-  /debug main <== EVENT_groupUp -|
-/RETURN
-**|
-|---------------------------|
-#EVENT exp_group "[#1#] ExpGroup #2#"
-#EVENT exp_group "<#1#> ExpGroup #2#"
-#EVENT exp_group "#1# tells the group, 'ExpGroup #2#'"
-#EVENT exp_group "#1# tell your party, 'ExpGroup #2#'"
-SUB EVENT_exp_group(line,ChatSender, expToggle)
-	|/if (!${Ini[${Character_Ini},Swap Items].Length}) /call WriteToIni "${Character_Ini},Swap Items,;Melee" "Ruby of Determined Assault|Ranged"
-  /call verifyEvent "${ChatSender}" "${line}"
-  /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-  |-    |-----------Valid User----------|    |-----------In Zone-------------|	|--------Included Bot-----------|
-  /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
-
-    |enable KoS mode
-    /if (${Select[${expToggle},On,Yes,True,1]} > 0) {
-      /call #INItoArray "${Character_Ini},Melee Abilities,Ability#" MyAbilities
-      /if (${Me.Class.ShortName.Equal[Rog]}) {
-      	/call buff_SpellArrays
-				/varset strikeDisc ${strikeDiscStr.Arg[1,/]}
-			}
-      /if (${Ini[${Character_Ini},Nukes,${KSNukeSet}].Length}) /call event_NukeSet "PLACEHOLDER" "${Me}" ${KSNukeSet}
-      /if (${Ini[${Character_Ini},Swap Items,${KSWeaponSet}].Length}) /swap ${KSWeaponSet}
-      /echo \ag KS Mode Activated - get exp
-
-		|remove anything that could kos when out of group
-    } else /if (${Select[${expToggle},Off,No,False,0]} > 0) {
-      /if (${Select[${Me.Class.ShortName},${Ini[${genSettings_Ini},ExpGroup,NoCombatAbil]}]} && ${Defined[MyAbilities]}) /deletevar MyAbilities
-      /if (${Ini[${Character_Ini},Nukes,${NoKSNukeSet}].Length}) /call event_NukeSet "PLACEHOLDER" "${Me}" ${NoKSNukeSet}
-			/if (${Defined[NoKSWeaponSet]} && ${Ini[${Character_Ini},Swap Items,${NoKSWeaponSet}].Length}) /swap ${NoKSWeaponSet}
-      /if (${Me.Class.ShortName.Equal[Rog]}) {
-				/varset strikeDisc 0
-        /declare i int local
-        :remove_poisons
-          /for i 1 to ${CombatBuffs2D.Size[1]}
-            /if (${CombatBuffs2D[${i},${iCastName}].Find[${expNoPoison}]}) {
-              /call RemoveSpellArrayElement "CombatBuffs2D" ${i}
-              /goto :remove_poisons
-            }
-          /next i
-          /for i 1 to ${SelfBuffs2D.Size[1]}
-          /if (${SelfBuffs2D[${i},${iCastName}].Find[${expNoPoison}]}) {
-            /call RemoveSpellArrayElement "SelfBuffs2D" ${i}
-            /goto :remove_poisons
-          }
-          /next i
-          /for i 1 to ${BotBuffs2D.Size[1]}
-          /if (${BotBuffs2D[${i},${iCastName}].Find[${expNoPoison}]}) {
-            /call RemoveSpellArrayElement "BotBuffs2D" ${i}
-            /goto :remove_poisons
-          }
-          /next i
-        /squelch ${Me.Buff[${expNoPoison}].Remove}
-      }
-      /echo \ag NoKS Mode Activated - do not get exp
-    }
-}
-/return
 
 |---------------------------|
-#EVENT reportMana "<#1#> Report mana#*#"
+|- Written by Stryd of PEQ -|
+|---------------------------|
+#EVENT reportMana "<#1#> Report mana"
 SUB EVENT_reportMana(line,ChatSender)
 /if (${Me.Class.CanCast}) {
 	/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_reportMana ==>
+		|- Verify the event
 		/call verifyEvent "${ChatSender}" "${line}"
 		/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 		|-    |-----------Valid User----------|    |-----------In Zone-------------|	|--------Included Bot-----------|
 		/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {   	
-			/if (${Me.PctMana}<100) /docommand ${ChatToggle} ${Me.PctMana}m
-			|${If[${Me.PctMana}!=100, - Full Mana in ${Math.Calc[((${Me.MaxMana}-${Me.CurrentMana})/${Me.ManaRegen})*6]}s,]}
+			/docommand ${ChatToggle} ${Me.PctMana}m${If[${Me.PctMana}!=100, - Full Mana in ${Math.Calc[((${Me.MaxMana}-${Me.CurrentMana})/${Me.ManaRegen})*6]}s,]}
 		}
 	/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_reportMana [${Me.PctMana}m] -|
 }
 /RETURN
-
-
 
 Sub basics_Setup
 /call INItoVar "${advSettings_Ini},Debug,Debug Basics (On/Off)" Debug_Basics bool outer
@@ -1811,29 +1829,22 @@ Sub basics_Setup
 	/declare MeleeClasses string outer BRD,BER,BST,MNK,PAL,RNG,ROG,SHD,WAR
 	/declare PriestClasses string outer CLR,DRU,SHM
 	/declare CasterClasses string outer ENC,MAG,NEC,WIZ
-
-	/declare event_counter int outer 0
-
+	
 	/declare medBreak bool outer FALSE
 	/declare medBreak_Hold bool outer FALSE
 	/declare medbreak_Popup_Timer timer outer
-	/declare clickitRandomDelay int outer 10
-
-	/if (${Ini[${genSettings_Ini},ExpGroup,NoKS_WeaponSet].Length}) 		/call IniToVar "${genSettings_Ini},ExpGroup,NoKS_WeaponSet" NoKSWeaponSet string outer
-	/if (${Ini[${genSettings_Ini},ExpGroup,KS_WeaponSet].Length}) 			/call IniToVar "${genSettings_Ini},ExpGroup,KS_WeaponSet" KSWeaponSet string outer
-	/if (${Ini[${genSettings_Ini},ExpGroup,NoKS_NukeSet].Length}) 			/call IniToVar "${genSettings_Ini},ExpGroup,NoKS_NukeSet" NoKSNukeSet string outer
-	/if (${Ini[${genSettings_Ini},ExpGroup,KS_NukeSet].Length}) 				/call IniToVar "${genSettings_Ini},ExpGroup,KS_NukeSet" KSNukeSet string outer
-	/if (${Ini[${genSettings_Ini},ExpGroup,NoPoison].Length}) 					/call IniToVar "${genSettings_Ini},ExpGroup,NoPoison" expNoPoison string outer
-
+	
 	/declare MaxResponseDist int outer 250
 	/if (${Ini[${genSettings_Ini},General,Max Response Distance].Length} && ${Int[${Ini[${genSettings_Ini},General,Max Response Distance]}]}) /call IniToVar "${genSettings_Ini},General,Max Response Distance" MaxResponseDist int outer
 
 	/declare LeashLength int outer 100
 	/if (${Ini[${genSettings_Ini},General,Leash Length].Length} && ${Int[${Ini[${genSettings_Ini},General,Leash Length]}]}) /call IniToVar "${genSettings_Ini},General,Leash Length" LeashLength int outer
-	/if (${Ini[${genSettings_Ini},General,End MedBreak in Combat(On/Off)].Length}) /call IniToVar "${genSettings_Ini},General,End MedBreak in Combat(On/Off)" medOn_combatBreak bool outer
-  /if (${Ini[${genSettings_Ini},General,AutoMedBreak PctMana].Length}) /call IniToVar "${genSettings_Ini},General,AutoMedBreak PctMana" autoMedPctMana int outer
+	
+	/if (!${Ini[${genSettings_Ini},General,End MedBreak in Combat(On/Off)].Length}) /call IniToVar "${genSettings_Ini},General,End MedBreak in Combat(On/Off)" medOn_combatBreak bool outer
+	
 	| -Add Groups_Ini file path
 	/if (!${Ini[${MacroData_Ini},File Paths,Saved Groups].Length}) /call WriteToIni "${MacroData_Ini},File Paths,Saved Groups" "e3 Macro Inis\Saved Groups.ini" 1
+	
 	| -Import Groups_Ini.
 	/if (!${Ini[${MacroData_Ini},File Paths,Saved Groups].Length}) {
 		/echo ERROR: Could not find designated file path for [Saved Groups], please review [${MacroData_Ini}] and restart.
@@ -1841,123 +1852,116 @@ Sub basics_Setup
 	} else {
 		/declare Group_Ini string outer ${Ini[${MacroData_Ini},File Paths,Saved Groups]}
 	}
+	
 /if (${Debug} || ${Debug_Basics}) /echo <== basics_Setup -|
 /return
 
 
 
 Sub basics_Background_Events
+
 	/doevents Follow
+	/doevents MoveHere
+	/doevents bark
+	/doevents clickIt
+	/doevents runThruZone
+	/doevents dropinvis
+	/doevents add_AutoDestroyItem
+	/doevents remove_AutoDestroyItem
 	/doevents Stop
-  /doevents MoveHere
-|	/if (${event_counter}==3) {
-  /doevents clickIt
-  /doevents oldclickIt
-  /doevents bark
-  /doevents reportMana
-  /doevents groupUp
-  /doevents listGroups
-  /doevents saveGroup
-  /doevents Disband
-  /doevents Invite
-  /doevents Force_RaidDisband
-  /doevents Request_RaidInvite
-  /doevents RaidAccept
-  /doevents Evacuate
-  /doevents gate
-  /doevents ClickYes
-  /doevents gatherCorpses
-  /doevents flushConsent
-  /doevents addConsent
-  /doevents Consent
-  /doevents fixCorpses
-  /doevents set_AAXP
-  /doevents medOff
-  /doevents medOn
-  /doevents EndMacro
-  /doevents castItem
-  /doevents Swap_Items
-  /doevents CountBots
-  /doevents FindMissingItem
-  /doevents FindItems
-  /doevents CheckBuffs
-  /doevents LoadSpells
-  /doevents Exit
-  /doevents dropInvis
-  /doevents dropBuff
-  /doevents runThruZone
-  /doevents macroHelp
-  /doevents exp_group
-|		/varset event_counter 1
-|	} else {
-|		/varcalc event_counter ${event_counter}+1
-|	}
+	/doevents barkReturn
+	/doevents Exit
+	/doevents RemoveBuff
+	/doevents CheckBuffs
+	/doevents FindItems
+	/doevents CountBots
+	/doevents EndMacro
+	/doevents Consent
+	/doevents Invite
+	/doevents Disband
+	/doevents saveGroup
+	/doevents listGroups
+	/doevents groupUp
+	/doevents checkPCOnline
+	/doevents medOn
+	/doevents medOff
+	/doevents fixCorpses
+	/doevents reportMana
+	/doevents addConsent
+
 /return
+
+
 
 SUB basics_MacroSettings
 /if (${Debug} || ${Debug_Basics}) /echo |- basics_MacroSettings ==>
-	/call WriteToIni "${advSettings_Ini},Debug,Debug Basics (On/Off)" Off
+
+	
+
+	/call WriteToIni "${advSettings_Ini},Debug,Debug Basics (On/Off)"
+
 	/call WriteToIni "${genSettings_Ini},General,Max Response Distance" 500
 	/call WriteToIni "${genSettings_Ini},General,Leash Length" 250
 	/call WriteToIni "${genSettings_Ini},General,End MedBreak in Combat(On/Off)" On
-  /call WriteToIni "${genSettings_Ini},General,AutoMedBreak PctMana" 0
-
-	/call WriteToIni "${genSettings_Ini},ExpGroup,NoKS_WeaponSet" NoExp
-	/call WriteToIni "${genSettings_Ini},ExpGroup,NoKS_NukeSet" NoExp
-	/call WriteToIni "${genSettings_Ini},ExpGroup,KS_WeaponSet" Main
-	/call WriteToIni "${genSettings_Ini},ExpGroup,KS_NukeSet" Exp
-	/call WriteToIni "${genSettings_Ini},ExpGroup,NoPoison" "Bite of the Shissar"
 
 /if (${Debug} || ${Debug_Basics}) /echo <== basics_MacroSettings -|
 /RETURN
 
+
+
 SUB basics_CharacterSettings
 /if (${Debug} || ${Debug_Basics}) /echo |- basics_CharacterSettings ==>
-	/if (!${Ini[${Character_Ini},Swap Items].Length}) /call WriteToIni "${Character_Ini},Swap Items,;Melee" "Ruby of Determined Assault|Ranged"
-  /if (!${Ini[${Character_Ini},Swap Items].Length}) /call WriteToIni "${Character_Ini},Swap Items,;Ranged" "Bow of the Tempest|Ranged"
-	/if (!${Ini[${Character_Ini},Use Items].Length}) /call WriteToIni "${Character_Ini},Use Items,;Shrink" "Bracelet of the Shadow Hive"
+
+	/if (!${Ini[${Character_Ini},Swap Items].Length}) /call WriteToIni "${Character_Ini},Swap Items,(Example) Two Hander" "Lodestar|mainhand"
+	/if (!${Ini[${Character_Ini},Swap Items].Length}) /call WriteToIni "${Character_Ini},Swap Items,(Example) One Handers" "Heartwood Blade|mainhand/Chaotic Black Scimitar|offhand"
+	/if (!${Ini[${Character_Ini},Use Items].Length}) /call WriteToIni "${Character_Ini},Use Items,(Example) ShinkItem" "Bracelet of the Shadow Hive"
+
 /if (${Debug} || ${Debug_Basics}) /echo <== basics_CharacterSettings -|
 /RETURN
 
+
+
 Sub basics_Aliases
 /if (${Debug} || ${Debug_Basics}) /echo |- basics_Aliases ==>
+
+	/squelch /alias /thfgate /bc thfgate
+	/squelch /alias /valegate /bc valegate
 	/noparse /squelch /alias /followon /bc Follow ${Me.CleanName}
 	/noparse /squelch /alias /followme /bc Follow ${Me.CleanName}
 	/noparse /squelch /alias /followit /bc Follow ${Target.CleanName}
 	/squelch /alias /followoff /bc Stop
 	/squelch /alias /stop /bc Stop
 	/squelch /alias /mtm /bc Move to me
-  /squelch /alias /movetome /bc Move to me
 	/noparse /squelch /alias /mtt /bc Move to ${Target.ID}
-  /noparse /squelch /alias /movetotarget /bc Move to ${Target.ID}
+	/squelch /alias /movetome /bc Move to me
+	/noparse /squelch /alias /movetotarget /bc Move to ${Target.ID}
 	/noparse /squelch /alias /Bark /bc Bark at ${Target.ID}
-	|/noparse /squelch /alias /ClickIt /bc Click object at ${Me.Loc.Replace[ ,]}
-  /squelch /alias /ClickIt /bc Click It
-  /noparse /squelch /alias /oClickIt /bc OldClickit ${Me.Loc.Replace[ ,]}
+	/noparse /squelch /alias /ClickIt /bc Click object at ${Me.Loc.Replace[ ,]}
 	/noparse /squelch /alias /RunThruZone /bc Run through zone at ${Me.Loc.Replace[ ,]},${Me.Heading.Degrees}
 	/noparse /squelch /alias /RunThroughZone /bc Run through zone at ${Me.Loc.Replace[ ,]},${Me.Heading.Degrees}
 	/noparse /squelch /alias /RTZ /bc Run through zone at ${Me.Loc.Replace[ ,]},${Me.Heading.Degrees}
 	/squelch /alias /ClickYes /bc Click yes
+	/squelch /alias /ClkYes /bc Click yes
 	/squelch /alias /Yes /bc Click yes
 	/squelch /alias /ClickNo /bc Click No
+	/squelch /alias /ClkNo /bc Click No
 	/squelch /alias /No /bc Click No
 	/squelch /alias /DropInvis /bc Drop Invisibility
 	/squelch /alias /BotExit /bc Exit
 	/squelch /alias /Gate /bc Gate
 	/squelch /alias /Evac /bc Evac
 	/squelch /alias /LoadSpells /bc Load Spells
-	/squelch /alias /DropBuff /bc Drop Buff
+	/squelch /alias /RemoveBuff /bc Remove Buff
 	/squelch /alias /CheckBuff /bc Check Buff
 	/squelch /alias /FindItem /bc Find Item
-  /squelch /alias /FindMissingItem /bc Find Missing Item
 	/noparse /squelch /alias /FindIt /bc Find Item ${Cursor}
 	/squelch /alias /CountBots /echo Head Count
 	/squelch /alias /Count /echo Head Count
 	/squelch /alias /BotCount /echo Head Count
 	/squelch /alias /RollCall /echo Head Count
 	/squelch /alias /Swap /echo Swap
-	/squelch /alias /useitem /useitem
-	/squelch /alias /castitem /echo Cast Item
+	/squelch /alias /useitem /echo Use Item
+	/squelch /alias /castitem /echo Use Item
 	/noparse /squelch /alias /ConsentMe /bc Consent ${Me.CleanName}
 	/squelch /alias /BotConsent /bc Consent
 	/squelch /alias /Group /bc Group
@@ -1975,5 +1979,210 @@ Sub basics_Aliases
 	/squelch /alias /ResetCorpses /bc Fix Corpses
 	/squelch /alias /gathercorpses /echo Gather Corpses
 	/squelch /alias /mana /bc Report Mana
+
 /if (${Debug} || ${Debug_Basics}) /echo <== basics_Aliases -|
 /return
+
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|**
+
+| -Add Filter File Path
+/if (!${Ini[${MacroData_Ini},File Paths,Filter Settings].Length}) /call WriteToIni "${MacroData_Ini},File Paths,Filter Settings" "Macro Inis\Filter Settings.ini"
+
+|- Filter Settings
+/if (!${Ini[${MacroData_Ini},File Paths,Filter Settings].Length}) {
+	/echo ERROR: Could not find designated file path for [Filter Settings].  Please review review settings in [${MacroData_Ini} > File Paths].
+	/endmacro
+} else {
+	/declare filterSettings_ini string outer ${Ini[${MacroData_Ini},File Paths, Filter Settings]}
+}
+
+
+	/squelch /alias /filters /echo Server Filters: 
+	/squelch /alias /savefilters /echo Save Filters: 
+
+
+|- Usage: /filters refName
+|- Must have created an entry in the Filter Settings.ini file for refName by using /savefilters refName
+#EVENT serverFilters "[MQ2] Server Filters: #1#"
+SUB EVENT_serverFilters(line,refName)
+/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_serverFilters [${refName}] ==>
+/if (${Ini[${filterSettings_ini},${refName}].Length}) {
+	/call openOptions Filters
+	/declare filterList string local Window[OptionsWindow].Child[OFP_FilterList]
+	/declare settingNum int local
+	/declare i int local
+	/call IniToArray2 "${filterSettings_ini}" "${refName}" "filterSettings" "outer"
+	/for i 1 to 32
+		/varset settingNum 1
+		|- If the current filter setting is not equal to the ini's filter setting...
+		/if (${${filterList}.List[${i},2].NotEqual[${filterSettings[${i},2]}]}) {
+			|- Select the setting to be adjusted.
+			/notify OptionsWindow OFP_FilterList listselect ${i}
+			|- Find the position number of the desired setting in the combo box.
+			:findSetting
+			/if (${Window[OptionsWindow].Child[OFP_FilterComboBox].List[${settingNum}].Equal[${filterSettings[${i},2]}]}) {
+				|- Select the desired setting in the combo box
+				/notify OptionsWindow OFP_FilterComboBox listselect ${settingNum}
+			} else {
+				|- Loop until the desired setting is found
+				/varcalc settingNum ${settingNum}+1
+				/goto :findSetting
+			}
+		}
+	/next i
+	/deletevar filterSettings
+} else {
+	/echo ${refName} is not a valid saved filter setting! Use "/savefilters ${refName}" to save your desired filter settings for future use.
+}
+|- Close the options window
+/keypress ALT+O
+/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_serverFilters [${filterSetting}] -|
+/RETURN
+
+
+
+|- Usage: /savefilters refName
+|- Saves current chat filter settings to the Filter Settings.ini file
+#EVENT saveFilters "[MQ2] Save Filters: #1#"
+SUB EVENT_saveFilters(line,refName)
+/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_saveFilters [${refName}] ==>
+/call openOptions Filters
+/declare filterNames[32] string local
+/declare filterSettings[32] string local
+/declare i int local
+/declare filterList string local Window[OptionsWindow].Child[OFP_FilterList]
+/for i 1 to 32
+	/ini "${filterSettings_ini}" "${refName}" "${${filterList}.List[${i},1]}" "${${filterList}.List[${i},2]}"
+/next i
+/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_saveFilters -|
+/RETURN
+
+
+|- Opens the options window and opens to a specified tabName. If given no tabName, opens to General tab.
+SUB openOptions(string tabName)
+/if (${Debug} || ${Debug_Basics}) /echo |- openOptions [${tabName}] ==>
+|- open the options window. this happens even if no tab is given. default tab is general.
+/declare tabNum int local 1
+/declare pageName string local OptionsGeneralPage
+:optionsOpen
+/if (!${Window[OptionsWindow].Open}) /keypress ALT+O
+/delay 20 ${Window[OptionsWindow].Open}
+/if (!${Window[OptionsWindow].Open}) {
+	/echo Could not open the options window using ALT+O. Please make sure this is the correct keybind. Trying again!
+	/goto :optionsOpen
+}
+/if (${tabName.Equal[General]}) {
+	|- use defaults above
+} else /if (${tabName.Equal[Display]}) {
+	/varset tabNum 2
+	/varset pageName OptionsDisplayPage
+} else /if (${tabName.Equal[Mouse]}) {
+	/varset tabNum 3
+	/varset pageName OptionsMousePage
+} else /if (${tabName.Equal[Keys]}) {
+	/varset tabNum 4
+	/varset pageName OptionsKeyboardPage
+} else /if (${tabName.Equal[Chat]} || ${tabName.Equal[Filters]}) {
+	/varset tabNum 5
+	/varset pageName OptionsChatPage
+} else /if (${tabName.Equal[Colors]}) {
+	/varset tabNum 6
+	/varset pageName OptionsColorPage
+} else /if (${tabName.Equal[Mail]}) {
+	/varset tabNum 7
+	/varset pageName OptionsMailPage
+} else /if (${tabName.Equal[Voice]}) {
+	/varset tabNum 8
+	/varset pageName OptionsVoicePage
+}
+:openTab
+/if (!${Window[OptionsWindow].Child[${pageName}].Open}) /notify OptionsWindow OPTW_OptionsSubwindows tabselect ${tabNum}
+/delay 20 ${Window[OptionsWindow].Child[${pageName}].Open}
+/if (!${Window[OptionsWindow].Child[${pageName}].Open}) {
+	/echo Could not open ${tabName} tab. Retrying...
+	/goto :openTab
+}
+/if (${Debug} || ${Debug_Basics}) /echo <== openOptions -|
+/RETURN
+
+
+
+
+
+
+
+
+
+#EVENT corpseDrag "[MQ2] drag corpses"
+#EVENT corpseDrag "[MQ2] start corpse drag"
+SUB EVENT_corpseDrag
+/if (${Debug}) /echo |- EVENT_corpseDrag ==>
+
+	/declare i int local 1
+	
+	:next_consentTarget
+	/if (${Me.Running}) /keypress "ctrl r" release
+	/if (${consentTargets.Arg[${i},,].Length}) {
+
+		/if (${SpawnCount[${consentTargets.Arg[${i},,]}'s radius 100]} && !${SpawnCount[${consentTargets.Arg[${i},,]}'s radius 10]}) {
+		
+			/call TrueTarget ${Spawn[${consentTargets.Arg[${i},,]}'s].ID}
+			/corpse
+			/delay 1
+		}
+		
+		
+		/varcalc i ${i} + 1
+		/goto :next_consentTarget
+	} else {
+		/varset i 1
+		/goto :next_consentTarget
+	}
+	
+/if (${Debug}) /echo <== EVENT_corpseDrag -|
+/RETURN
+
+| need some way to turn off corpse drag; but, I'm bored, and dont want to do it.
+
+#EVENT add_AutoDestroyItem "[MQ2] Add Auto Destroy Item #1#"
+SUB EVENT_add_AutoDestroyItem(line, WhatToAdd)
+/if (${Debug} || ${Debug_Basics}) /echo |- add_AutoDestroyItem ==>
+
+	/if (!${Cursor.ID}) {
+		/echo You must be holding the item you wish to add to the auto destroy list.
+	} else {
+		/if (${WhatToAdd.NotEqual[${Cursor.Name}]}) {
+			/echo ERROR: The item on your cursor does not match the auto destroy request.  Please try again.
+		} else {
+			/if (${Select[${WhatToAdd},${Ini[${Macro_Ini},Background,Auto-Destroy List]}]}) {
+				/echo [${WhatToAdd}] is already on the Auto-Destroy List.
+			} else {
+				/echo Adding [${WhatToAdd}] to the Auto-Destroy list.
+				/if (!${Ini[${Macro_Ini},Background,Auto-Destroy List].Length}) {
+					/ini "${Macro_Ini}" "Background" "Auto-Destroy List" "${WhatToWrite}"
+				} else {
+					/ini "${Macro_Ini}" "Background" "Auto-Destroy List" "${Ini[${Macro_Ini},Background,Auto-Destroy List]},${WhatToWrite}"
+				}
+			}
+		}
+	}
+
+/if (${Debug} || ${Debug_Basics}) /echo <== add_AutoDestroyItem -|
+/RETURN
+
+#EVENT remove_AutoDestroyItem "[MQ2] Remove Auto Destroy Item #1#"
+SUB EVENT_remove_AutoDestroyItem(line, WhatToAdd)
+/if (${Debug} || ${Debug_Basics}) /echo |- remove_AutoDestroyItem ==>
+
+	/if (!${Select[${WhatToAdd},${Ini[${Macro_Ini},Background,Auto-Destroy List]}]}) {
+		/echo [${WhatToAdd}] is not on the Auto-Destroy List.
+	} else {
+		/echo this function is not yet finished
+	}
+
+/if (${Debug} || ${Debug_Basics}) /echo <== remove_AutoDestroyItem -|
+/RETURN
+
