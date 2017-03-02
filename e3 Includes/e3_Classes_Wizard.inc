@@ -14,7 +14,7 @@ SUB check_Harvest
 
 	/if (${autoHarvest} && ${Me.PctMana} < 70 && ${Me.PctHPs} > 35) {
 		| AltAbility
-		/if (${Me.PctMana} < 65 && ${Me.AltAbilityReady[Harvest of Druzzil]}) /call e3_Cast 0 "Harvest of Druzzil"
+		/if (${Me.PctMana} < 15 && ${Me.AltAbilityReady[Harvest of Druzzil]}) /call e3_Cast 0 "Harvest of Druzzil"
 
 		/if (!${ActionTaken}) {
 		
@@ -32,7 +32,7 @@ SUB check_Harvest
 
 /RETURN
 
-
+|------------------------------------------------------|
 
 Sub WIZ_Setup
 /if (${Debug}) /echo |- WIZ_Setup ==>
@@ -58,7 +58,16 @@ Sub WIZ_Setup
 
 Sub WIZ_Background_Events
 
-	/if (${Me.Pet.ID} && ${Me.Pet.CleanName.Find[${Me.CleanName}`s Familiar]} && ${MacroQuest.Server.Equal[PEQTGC]}) /pet get lost
+/if (${Me.Pet.ID} && ${Me.Pet.CleanName.Find[${Me.CleanName}`s Familiar]} && ${MacroQuest.Server.Equal[HiddenForest]}) /pet get lost
+	
+/if (${Bool[${Me.AltAbility[Mind Crash]}]} && ${Me.AltAbilityReady[Mind Crash]}) {
+     /if (${Assisting} && ${Me.CombatState.Equal[Combat]} && ${Target.Named} && ${Target.Level} >= ${Math.Calc[${Me.Level}+3]} && ${Me.TargetOfTarget.CleanName.Equal[${Me.CleanName}]})  {
+     /if (${Me.Casting.ID}) /call interrupt
+      /delay 1s !${Me.Casting.ID}
+      /echo \say I have aggro on a dangerous target, casting Mind Crash!
+      /e3_Cast "Mind Crash"
+    }
+  }
 
 /return
 
