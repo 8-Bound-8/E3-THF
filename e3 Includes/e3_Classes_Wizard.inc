@@ -10,13 +10,18 @@
 
 
 
-SUB check_Harvest
+SUB check_Harvest	
 
-	/if (${autoHarvest} && ${Me.PctMana} < 70 && ${Me.PctHPs} > 35) {
-		| AltAbility
-		/if (${Me.PctMana} < 15 && ${Me.AltAbilityReady[Harvest of Druzzil]}) /call e3_Cast 0 "Harvest of Druzzil"
-
-		/if (!${ActionTaken}) {
+	/if (${autoHarvest} && ${Me.PctMana} < 80 && ${Me.PctHPs} > 35) {
+	
+		/if (${Me.PctMana} < 80 && ${Me.AltAbilityReady[Harvest of Druzzil]}) /call e3_Cast 0 "Harvest of Druzzil"
+		/if (${Me.PctMana} < 55 && ${FindItemCount[Orb of Spirits]} && ${FindItem[Orb of Spirits].Timer}==0 &&  !${FindItemCount[Powerful Silk Slippers]}) /call e3_Cast 0 "Orb of Spirits" 
+		/if (${Me.PctMana} < 30 && ${FindItemCount[Silver Chains]} && ${FindItem[Silver Chains].Timer}==0 &&  !${FindItemCount[Powerful Silk Slippers]}) /call e3_Cast 0 "Silver Chains" 
+		/if (${Me.PctMana} < 30 && ${FindItemCount[Powerful Silk Slippers]} && ${FindItem[Powerful Silk Slippers].Timer}==0) /call e3_Cast 0 "Powerful Silk Slippers" 
+		
+	}	
+		
+	/if (${autoHarvest} && ${Me.PctMana} < 65 && ${Me.PctHPs} > 35) {
 		
 			/declare castName string local
 			/declare i int local
@@ -24,13 +29,12 @@ SUB check_Harvest
 			/for i 1 to ${harvestSpells.Size}
 			
 				/varset castName ${harvestSpells[${i}].Arg[1,/]}
-				/call e3_Cast 0 "${harvestSpells[${i}]}/giveuptimer|${If[${Me.Gem[${castName}]} || ${FindItemCount[=${castName}]},0,80]}"
+				/call e3_Cast 0 "${harvestSpells[${i}]}/giveuptimer|${If[${Me.Gem[${castName}]} || ${FindItemCount[=${castName}]},0,80]}
 
-			/if (!${ActionTaken}) /next i
-		}
 	}
-
+	
 /RETURN
+
 
 |------------------------------------------------------|
 
