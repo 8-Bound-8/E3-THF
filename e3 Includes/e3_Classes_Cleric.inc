@@ -44,9 +44,9 @@ sub check_DivineArb
 				/if (${Bool[${NetBots[${Group.Member[${i}]}]}]} && ${NetBots[${Group.Member[${i}]}].PctHPs} < ${DivineArb_Pct} || ${Spawn[pc ${Group.Member[${i}]}].PctHPs} < ${DivineArb_Pct}) {
 					
 					/if (${NetBots[${Group.Member[${i}]}].PctHPs}<${DivineArb_Pct}) {
-						/if (${FindItemCount[Ancient Frozen Aegis of Divinity]} && !${FindItem[Ancient Frozen Aegis of Divinity].Timer}==0) && !${itemTimer_${FindItem[=Ancient Frozen Aegis of Divinity].ID}}) {
+						/if (${FindItemCount[Ancient Frozen Aegis of Divinity]} && ${FindItem[Ancient Frozen Aegis of Divinity].Timer}==0) && !${itemTimer_${FindItem[=Ancient Frozen Aegis of Divinity].ID}}) {
 							/call e3_Cast ${Me.ID} "Ancient Frozen Aegis of Divinity"
-						} else /if (${FindItemCount[Ancient Shield of the Divine]} && !${FindItem[Ancient Shield of the Divine].Timer}==0) && !${itemTimer_${FindItem[=Ancient Shield of the Divine].ID}}) {
+						} else /if (${FindItemCount[Ancient Shield of the Divine]} && ${FindItem[Ancient Shield of the Divine].Timer}==0) && !${itemTimer_${FindItem[=Ancient Shield of the Divine].ID}}) {
 							/call e3_Cast ${Me.ID} "Ancient Shield of the Divine"
 						} else /if (${Me.AltAbilityReady[Divine Arbitration]}) {
 							/call e3_Cast ${Me.ID} "Divine Arbitration"
@@ -119,7 +119,9 @@ sub Event_Rez(string line, string ChatSender)
 		/tell ${ChatSender} Wait4Rez
 		/if (${Select[${Me.Race},High Elf]}) /em pops a toot!
 	 
-		/if (${FindItem[Staff of the Earthcrafter].ID}) {
+		/if (${FindItem[Aphrodite's Guantlets of Desire].ID}) {
+			/call e3_Cast ${Spawn[${ChatSender}'s].ID} "Aphrodite's Guantlets of Desire"
+		} else /if (${FindItem[Staff of the Earthcrafter].ID}) {
 			/call e3_Cast ${Spawn[${ChatSender}'s].ID} "Staff of the Earthcrafter"
 		} else /if (${FindItem[Hammer of Kerafyrm].ID}) {
 			/call e3_Cast ${Spawn[${ChatSender}'s].ID} "Hammer of Kerafyrm"
@@ -215,7 +217,9 @@ SUB EVENT_AE_Rez
 
 						/tell ${playerName} Wait4Rez
 
-						/if (${FindItem[Staff of the Earthcrafter].ID}) {
+						/if (${FindItem[Aphrodite's Guantlets of Desire].ID}) {
+							/call e3_Cast ${corpseID} "Aphrodite's Guantlets of Desire"
+						} else /if (${FindItem[Staff of the Earthcrafter].ID}) {
 							/call e3_Cast ${corpseID} "Staff of the Earthcrafter"
 						} else /if (${FindItem[Hammer of Kerafyrm].ID}) {
 							/call e3_Cast ${corpseID} "Hammer of Kerafyrm"							
