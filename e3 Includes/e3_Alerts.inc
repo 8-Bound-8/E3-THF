@@ -2,27 +2,8 @@
 |- GoD_Alerts.inc ( originally designed to work with e3.mac )	-|
 |- Written by Killians of PEQ									-|
 |----------------------------------------------------------------|
-|- Contains various alerts.										-|
+|- Contains various alerts for GoD events.						-|
 |----------------------------------------------------------------|
-
-
-
-#event tactics_stampede "#*#You hear the pounding of hooves#*#"
-Sub event_tactics_stampede
-	/if (${Zone.ShortName.Equal[potactics]}) {
-		/gsay STAMPEDE!
-		/beep
-	}
-/return
-
-
-
-#event charFlag "You receive a character flag#*#"
-Sub event_charFlag
-	/bc I have recieved a character flag!
-/return
-
-
 
 #event Define_UquaKey "#*#The #1# must unlock the door to the next room.#*#"
 SUB event_Define_UquaKey(string line, string KeyToUse)
@@ -88,8 +69,10 @@ SUB event_setClass_Bard
 /return
 
 SUB event_setClass_Paladin
+/if (${Zone.ID} == 294) {
 	/popup Spawn must be killed by a >>^<< PALADIN >>^<< 
 	/rs Spawn must be killed by a >>^<< PALADIN >>^<< 
+}	
 /return
 
 SUB event_setClass_Rogue
@@ -134,9 +117,9 @@ SUB event_setClass_Ranger
 
 SUB event_startClass_Priests
 	/if (!${Defined[murauderKill]}) {
-		/declare murauderKill int outer 4
+		/declare murauderKill int outer 3
 	} else /if (${Defined[murauderKill]}) {
-		/varset murauderKill 4
+		/varset murauderKill 3
 	}
 	/rs Spawn must be killed by a >>^<< PRIEST >>^<< 
 /return
@@ -161,9 +144,9 @@ SUB event_startClass_Casters
 
 SUB event_startClass_Melees
 	/if (!${Defined[murauderKill]}) {
-		/declare murauderKill int outer 3
+		/declare murauderKill int outer 4
 	} else /if (${Defined[murauderKill]}) {
-		/varset murauderKill 3
+		/varset murauderKill 4
 	}
 	/rs Spawn must be killed by a >>^<< MELEE >>^<< 
 /return
@@ -184,4 +167,10 @@ SUB event_MobSet
 	} else /if (${murauderKill} == 4) {
 		/rs Vrex Xalkaks Marauder must be killed by a >>^<< MELEE >>^<< 
 	}
+/return
+
+#event InktutaDeathtouch "#*#thoughts of a cursed trusik invade your mind#*#"
+SUB event_InktutaDeathtouch
+	/if (${Zone.ID} != 296) /return
+	/rs I, >>^<< ${Me.Name} >>^<<, who am about to die, salute you!!
 /return
