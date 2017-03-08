@@ -5,45 +5,6 @@
 |- Contains basic and miscellaneous EVENTs and functions of e3.mac.		-|
 |------------------------------------------------------------------------|
 
-|---------------THF Forest Gate-----------------|
-
-#event thfgate "<#1#> thfgate"
-#event thfgate "you tell your party, 'thfgate'"
-#event thfgate "#1# tells the group, 'thfgate'"
-#event thfgate "#1# tells you, 'thfgate'"
-sub Event_thfgate
-	 
-		/if (${FindItem[=Charm of Queen Adrianne].ID}) {
-				/call e3_Cast ${Me.ID} "Charm of Queen Adrianne"
-			} else /if (${FindItem[=Advanced Charm of Queen Adrianne].ID}) {
-				/call e3_Cast ${Me.ID} "Advanced Charm of Queen Adrianne" 
-			} else /if (${FindItem[=Magical Charm of Queen Adrianne].ID}) {
-				/call e3_Cast ${Me.ID} "Magical Charm of Queen Adrianne" 
-			} else /if (${FindItem[=Advanced Magical Charm of Queen Adrianne].ID}) {
-				/call e3_Cast ${Me.ID} "Advanced Magical Charm of Queen Adrianne" 
-			} else /if (${FindItem[=Superior Magical Charm of Queen Adrianne].ID}) {
-				/call e3_Cast ${Me.ID} "Superior Magical Charm of Queen Adrianne" 
-			} else /if (${FindItem[=Exceptional Charm of Queen Adrianne].ID}) {
-				/call e3_Cast ${Me.ID} "Exceptional Charm of Queen Adrianne" 
-			} else /if (${FindItem[=Exquisite Charm of Queen Adrianne].ID}) {
-				/call e3_Cast ${Me.ID} "Exquisite Charm of Queen Adrianne" 
-		}
-	
-/return
-
-|---------------Hidden Vale Gate-----------------|
-
-#event valegate "<#1#> valegate"
-#event valegate "you tell your party, 'valegate'"
-#event valegate "#1# tells the group, 'valegate'"
-#event valegate "#1# tells you, 'valegate'"
-sub Event_valegate
-	 
-		/if (${FindItem[=Token of the Vale].ID}) {
-				/call e3_Cast ${Me.ID} "Token of the Vale"
-		}
-	
-/return
 
 
 |------------------------------
@@ -1924,8 +1885,6 @@ SUB basics_CharacterSettings
 Sub basics_Aliases
 /if (${Debug} || ${Debug_Basics}) /echo |- basics_Aliases ==>
 
-	/squelch /alias /thfgate /bc thfgate
-	/squelch /alias /valegate /bc valegate
 	/noparse /squelch /alias /followon /bc Follow ${Me.CleanName}
 	/noparse /squelch /alias /followme /bc Follow ${Me.CleanName}
 	/noparse /squelch /alias /followit /bc Follow ${Target.CleanName}

@@ -39,6 +39,8 @@ SUB DRU_MacroSettings
 	/call WriteToIni "${advSettings_Ini},DRU Functions,DRU Function#7" "check_Rain" 1
 	/call WriteToIni "${advSettings_Ini},DRU Functions,DRU Function#8" "check_Nukes" 1
 	/call WriteToIni "${advSettings_Ini},DRU Functions,DRU Function#9" "check_Buffs" 1
+	/call WriteToIni "${advSettings_Ini},DRU Functions,DRU Function#10" "check_Pets" 1
+	/call WriteToIni "${advSettings_Ini},DRU Functions,DRU Function#11" "check_GatherMana" 1
 
 /if (${Debug}) /echo <== DRU_MacroSettings -|
 /RETURN

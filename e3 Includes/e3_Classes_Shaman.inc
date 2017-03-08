@@ -85,6 +85,7 @@ SUB SHM_MacroSettings
 	/call WriteToIni "${advSettings_Ini},SHM Functions,SHM Function#9" "check_Buffs" 1
 	/call WriteToIni "${advSettings_Ini},SHM Functions,SHM Function#10" "check_Pets" 1
 	/call WriteToIni "${advSettings_Ini},SHM Functions,SHM Function#11" "check_Canni" 1
+	/call WriteToIni "${advSettings_Ini},SHM Functions,SHM Function#12" "check_GatherMana" 1
 
 /if (${Debug}) /echo <== SHM_MacroSettings -|
 /RETURN

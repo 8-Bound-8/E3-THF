@@ -328,6 +328,7 @@ SUB MAG_MacroSettings
 	/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#7" "check_Buffs" 1
 	/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#8" "check_Pets" 1
 	/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#9" "check_PetWeapons" 1
+	/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#10" "check_GatherMana" 1
 
 /if (${Debug} || ${Debug_MAG}) /echo <== MAG_MacroSettings -|
 /RETURN

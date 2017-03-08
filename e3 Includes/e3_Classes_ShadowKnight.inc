@@ -56,6 +56,7 @@ Sub SHD_Aliases
 	/call WriteToIni "${advSettings_Ini},SHD Functions,SHD Function#6" "check_Nukes" 1
 	/call WriteToIni "${advSettings_Ini},SHD Functions,SHD Function#7" "check_Buffs" 1
 	/call WriteToIni "${advSettings_Ini},SHD Functions,SHD Function#8" "check_Pets" 1
+	/call WriteToIni "${advSettings_Ini},SHD Functions,SHD Function#9" "check_GatherMana" 1
 
 /if (${Debug}) /echo <== SHD_Aliases -|
 /return

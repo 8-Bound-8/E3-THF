@@ -151,6 +151,7 @@ SUB ENC_MacroSettings
 	/call WriteToIni "${advSettings_Ini},ENC Functions,ENC Function#7" "check_Nukes" 1
 	/call WriteToIni "${advSettings_Ini},ENC Functions,ENC Function#8" "check_Buffs" 1
 	/call WriteToIni "${advSettings_Ini},ENC Functions,ENC Function#9" "check_Pets" 1
+	/call WriteToIni "${advSettings_Ini},ENC Functions,ENC Function#10" "check_GatherMana" 1
 
 /if (${Debug}) /echo <== ENC_MacroSettings -|
 /RETURN

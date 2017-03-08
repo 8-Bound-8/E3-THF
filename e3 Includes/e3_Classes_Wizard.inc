@@ -12,14 +12,7 @@
 
 SUB check_Harvest	
 
-	/if (${autoHarvest} && ${Me.PctMana} < 80 && ${Me.PctHPs} > 35) {
-	
-		/if (${Me.PctMana} < 80 && ${Me.AltAbilityReady[Harvest of Druzzil]}) /call e3_Cast 0 "Harvest of Druzzil"
-		/if (${Me.PctMana} < 55 && ${FindItemCount[Orb of Spirits]} && ${FindItem[Orb of Spirits].Timer}==0 &&  !${FindItemCount[Powerful Silk Slippers]}) /call e3_Cast 0 "Orb of Spirits" 
-		/if (${Me.PctMana} < 30 && ${FindItemCount[Silver Chains]} && ${FindItem[Silver Chains].Timer}==0 &&  !${FindItemCount[Powerful Silk Slippers]}) /call e3_Cast 0 "Silver Chains" 
-		/if (${Me.PctMana} < 30 && ${FindItemCount[Powerful Silk Slippers]} && ${FindItem[Powerful Silk Slippers].Timer}==0) /call e3_Cast 0 "Powerful Silk Slippers" 
-		
-	}	
+	/if (${autoHarvest} && ${Me.PctMana} < 80 && ${Me.PctHPs} > 35 && ${Me.AltAbilityReady[Harvest of Druzzil]})  /call e3_Cast 0 "Harvest of Druzzil"
 		
 	/if (${autoHarvest} && ${Me.PctMana} < 65 && ${Me.PctHPs} > 35) {
 		
@@ -86,6 +79,7 @@ SUB WIZ_MacroSettings
 	/call WriteToIni "${advSettings_Ini},WIZ Functions,WIZ Function#4" "check_Nukes" 1
 	/call WriteToIni "${advSettings_Ini},WIZ Functions,WIZ Function#5" "check_Harvest" 1
 	/call WriteToIni "${advSettings_Ini},WIZ Functions,WIZ Function#6" "check_Buffs" 1
+	/call WriteToIni "${advSettings_Ini},WIZ Functions,WIZ Function#7" "check_GatherMana" 1
 
 /if (${Debug}) /echo <== WIZ_MacroSettings -|
 /RETURN

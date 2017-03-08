@@ -244,6 +244,7 @@ SUB NEC_MacroSettings
 	/call WriteToIni "${advSettings_Ini},NEC Functions,NEC Function#9" "check_petHeal" 1
 	/call WriteToIni "${advSettings_Ini},NEC Functions,NEC Function#10" "check_Buffs" 1
 	/call WriteToIni "${advSettings_Ini},NEC Functions,NEC Function#11" "check_Pets" 1
+	/call WriteToIni "${advSettings_Ini},NEC Functions,NEC Function#12" "check_GatherMana" 1
 
 /if (${Debug}) /echo <== NEC_MacroSettings -|
 /RETURN
