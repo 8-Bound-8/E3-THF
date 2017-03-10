@@ -39,11 +39,30 @@ sub Event_thfgate
 #event valegate "#1# tells you, 'valegate'"
 sub Event_valegate
 	 
-		/if (${FindItem[=Token of the Vale].ID}) {
+		
+/if (${FindItem[=Token of the Vale].ID}) {
 				/call e3_Cast ${Me.ID} "Token of the Vale"
-		}
+}
 	
 /return
+
+
+|---------------Healing Automation-----------------|
+
+#event healbot "<#1#> healbot"
+#event healbot "you tell your party, 'healbot'"
+#event healbot "#1# tells the group, 'healbot'"
+#event healbot "#1# tells you, 'healbot'"
+sub Event_healbot
+
+/if (${FindItem[=A Collapsed Automation I].ID}) {
+				/call e3_Cast ${Me.ID} "A Collapsed Automation I"
+}
+	 
+	
+/return
+
+
 
 
 |-------------- Gather Mana Items -----------------|
@@ -88,6 +107,7 @@ Sub thf_Aliases
 
 	/squelch /alias /thfgate /bc thfgate
 	/squelch /alias /valegate /bc valegate
+	/squelch /alias /healbot /bc healbot
 
 
 /if (${Debug} || ${Debug_Thf}) /echo <== thf_Aliases -|
