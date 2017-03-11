@@ -106,6 +106,7 @@ Sub check_GatherMana
 Sub event_Xeru
 
 /target Xeru
+/pause 2s
 /if (${Target.ID} == 1002841 && ${Target.Distance} <= 15) {	
 	/if (${FindItem[=Chains of Reflection].ID} && ${FindItem[=Chains of Reflection].Timer}==0) {
 		/call e3_Cast ${Target.ID} "Chains of Reflection"
