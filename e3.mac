@@ -3,7 +3,7 @@
 |- Written by Killians of PEQ.	-|
 |--------------------------------|
 
-#turbo 20
+#turbo 25
 
 #include e3 Includes\e3_Setup.inc
 
@@ -28,7 +28,10 @@ SUB Main(modeSelect)
 	
 		/if (${ActionTaken}) /varset ActionTaken FALSE
 		
-		/if (${currentZone} != ${Zone.ID}) /call check_Zone
+		/if (${currentZone} != ${Zone.ID}) {
+			/call Auto_healbot
+			/call check_Zone
+			}
 		/if (${Following} && !${Assisting}) /call check_Follow
 		/call check_Active
 		/call check_Combat
