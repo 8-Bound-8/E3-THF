@@ -2,30 +2,20 @@
 |- e3_Classes_Rogue.inc v3.0 ( originally designed to work with e3.mac )	-|
 |- Written by Killians of PEQ												-|
 |----------------------------------------------------------------------------|
-
-
-
-|--------------------------------------------------------------------------------|
-|- rogueStrike																	-|
 |--------------------------------------------------------------------------------|
 |- Attempts to arm 'Assassin's Strike' type disciplines before using backstab.	-|
 |--------------------------------------------------------------------------------|
 Sub check_rogStrike
 /if (${Debug}) /echo |- rogueStrike ==>	
-	/if (${Me.CombatAbilityReady[${strikeDisc}]} && ${Me.AbilityReady[Backstab]} && !${Me.ActiveDisc.ID} && ${Me.Invis} && ${Me.Sneaking}) {
-		| Use 'Assassin's Strike' type disc.
-		/delay 1
+	
+
+	/if (${Me.CombatAbilityReady[${strikeDisc}]} && ${Me.Invis} && ${Me.Sneaking}) {
+		|-- Use 'Assassin's Strike' type disc. --|
+		/delay 10
 		/disc ${strikeDisc}
-		/delay 5 ${Bool[${Me.ActiveDisc.ID}]}
-		/delay 3
-		/doability Backstab
-		/delay 1
-		/attack on
 	}
 /if (${Debug}) /echo <== rogueStrike -|
 /return
-
-
 
 |------------------------------------------------------------|
 |- AutoHide													-|
@@ -34,23 +24,18 @@ Sub check_rogStrike
 |------------------------------------------------------------|
 sub AutoHide
 /if (${Debug}) /echo |- AutoHide ==>
-
 	| Engage sneak.
-	/if (!${Me.Sneaking} && ${Me.AbilityReady[Sneak]}) {
+	/if (!${Me.Sneaking}) {
 		/doability Sneak
 		/delay 1s ${Me.Sneaking}
 	}
-	
 	| Engage hide.
 	/if (${Me.Sneaking} && ${Me.AbilityReady[Hide]}) {
 		/doability Hide
 		/delay 1s ${Me.Invis}
 	}
-
 /if (${Debug}) /echo <== AutoHide -|
 /return
-
-
 
 |------------------------------------------------|
 |- AutoEvade									-|
@@ -70,50 +55,23 @@ sub AutoEvade
 /return
 
 
-
 Sub ROG_Setup
 /if (${Debug}) /echo |- ROG_Setup ==>
   /declare strikeTimer timer outer
 	/call IniToVar "${Character_Ini},Rogue,Auto-Hide (On/Off)" AutoHide bool outer
 	/call IniToVar "${Character_Ini},Rogue,Auto-Evade (On/Off)" AutoEvade bool outer
 	| Assassin Strikes
-	/call IniToVar "${Character_Ini},Rogue,Sneak Attack Discipline" strikeDiscStr string outer
-	/declare strikeDisc 		string outer ${strikeDiscStr.Arg[1,/]}
-	
-  /if (${Bool[${strikeDisc}]} && !${AutoHide}) /docommand ${ChatToggle} I cannot use ${strikeDisc} without AutoHide On
+	/call IniToVar "${Character_Ini},Rogue,Sneak Attack Discipline" strikeDisc string outer
 
-  
 /if (${Debug}) /echo <== ROG_Setup -|
 /return
 
-
-
-Sub ROG_Background_Events
-
-/if (${AutoHide} && !${Me.Invis} && !${Me.Moving} && ${Me.CombatState.NotEqual[COMBAT]}) /call AutoHide
-
-/if (${Me.Combat} && ${Me.CombatAbilityReady[Thief's Eyes]} && !${Me.Song[Thief's Eyes].ID}) {
-
-/disc Thief's Eyes
-}
-
-
-/return
-
-
-
 SUB ROG_MacroSettings
 /if (${Debug}) /echo |- ROG_MacroSettings ==>
-
-	| Adv Settings
-	/call WriteToIni "${advSettings_Ini},ROG Functions,ROG Function#1" "check_Burns" 1
-	/call WriteToIni "${advSettings_Ini},ROG Functions,ROG Function#2" "check_CombatBuffs" 1
-	/call WriteToIni "${advSettings_Ini},ROG Functions,ROG Function#3" "check_Buffs" 1
-
+	/call WriteToIni "${advSettings_Ini},ROG Functions,ROG Function" "check_Burns" 1
+	/call WriteToIni "${advSettings_Ini},ROG Functions,ROG Function" "check_Buffs" 1
 /if (${Debug}) /echo <== ROG_MacroSettings -|
 /RETURN
-
-
 
 SUB ROG_CharacterSettings
 /if (${Debug}) /echo |- ROG_CharacterSettings ==>
@@ -123,10 +81,17 @@ SUB ROG_CharacterSettings
 /if (${Debug}) /echo <== ROG_CharacterSettings -|
 /RETURN
 
-
-
 Sub ROG_Aliases
-/if (${Debug}) /echo |- ROG_Aliases ==>
+/return
 
-/if (${Debug}) /echo <== ROG_Aliases -|
+Sub ROG_Background_Events
+	/if (${AutoHide} && !${Me.Invis} && !${Me.Moving} && !${Me.Combat}) /call AutoHide
+	
+	/if (${Me.Invis} && ${Me.Sneaking} && !${Me.Combat} && !${Me.Casting.ID} && !${Window[CombatAbilityWnd].Child[CAW_CombatEffectLabel].Text.NotEqual[No Effect]}) /call check_rogStrike
+	
+	
+	/if (${Me.Combat} && ${Me.CombatAbilityReady[Thief's Eyes]} && !${Me.Song[Thief's Eyes].ID}) {
+
+		/disc Thief's Eyes
+		}
 /return
