@@ -357,7 +357,9 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 				/varset barkMsg ${barkMsg.Arg[1,-]}
 				/varset barkMsg ${barkMsg.Left[${Math.Calc[${barkMsg.Length} - 1].Int}]}
 			}
-			
+			/if (${Me.Class.ShortName.Equal[ROG]} && ${Me.Hiding}) {
+				/doability Hide
+				}
 			/say ${barkMsg}
 			
 			| -Wait up to 3 seconds for something to happen.

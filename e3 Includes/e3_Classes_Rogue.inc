@@ -9,10 +9,11 @@ Sub check_rogStrike
 /if (${Debug}) /echo |- rogueStrike ==>	
 	
 
-	/if (${Me.CombatAbilityReady[${strikeDisc}]} && ${Me.Invis} && ${Me.Sneaking}) {
+	/if (${Me.PctEndurance} < 20 && ${Me.CombatAbilityReady[${strikeDisc}]} && ${Me.Invis} && ${Me.Sneaking}) {
 		|-- Use 'Assassin's Strike' type disc. --|
-		/delay 10
+		/delay 1s
 		/disc ${strikeDisc}
+		/doability Backstab
 	}
 /if (${Debug}) /echo <== rogueStrike -|
 /return
@@ -44,7 +45,8 @@ sub AutoHide
 |------------------------------------------------|
 sub AutoEvade
 /if (${Debug}) /echo |- AutoEvade ==>
-	/if (${Me.AbilityReady[Hide]} && !${Bool[${Me.ActiveDisc.ID}]}) {
+			
+	/if (${Me.AbilityReady[Hide]} && !${Window[CombatAbilityWnd].Child[CAW_CombatEffectLabel].Text.NotEqual[No Effect]} && ${Me.TargetOfTarget.CleanName.Equal[${Me.CleanName}]}) {
 		/attack off
 		/delay 1s !${Me.Combat}	
 		/doability Hide
@@ -86,8 +88,6 @@ Sub ROG_Aliases
 
 Sub ROG_Background_Events
 	/if (${AutoHide} && !${Me.Invis} && !${Me.Moving} && !${Me.Combat}) /call AutoHide
-	
-	/if (${Me.Invis} && ${Me.Sneaking} && !${Me.Combat} && !${Me.Casting.ID} && !${Window[CombatAbilityWnd].Child[CAW_CombatEffectLabel].Text.NotEqual[No Effect]}) /call check_rogStrike
 	
 	
 	/if (${Me.Combat} && ${Me.CombatAbilityReady[Thief's Eyes]} && !${Me.Song[Thief's Eyes].ID}) {

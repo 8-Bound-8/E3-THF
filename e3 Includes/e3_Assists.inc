@@ -80,6 +80,9 @@ SUB event_Assist(line, ChatSender, int MobID)
 						| Melee / Ranged assist
 						/if (${AssistType.Equal[melee]}) {
 						
+							/if (${Me.Class.ShortName.Equal[ROG]} && ${Me.Invis} && ${Me.Sneaking}) {
+								/call check_rogStrike
+								}
 							/attack on
 							/if (${Int[${AssistDistanceSetting}]}) {
 								/varset AssistStickDistance ${AssistDistanceSetting}
