@@ -96,7 +96,26 @@ Sub check_GatherMana
 		
 /Return		
 		
+
 		
+		
+|-- Xeru the Arbiter --|
+
+#event Xeru "#*#Xeru The Arbiter of Mayon takes the form of the first Vampire#*#"
+
+Sub event_Xeru
+
+/target Xeru
+/if (${Target.ID} == 1002841 && ${Target.Distance} <= 15) {	
+	/if (${FindItem[=Chains of Reflection].ID} && ${FindItem[=Chains of Reflection].Timer}==0) {
+		/call e3_Cast ${Target.ID} "Chains of Reflection"
+		}
+} else /if (${Target.ID} == 1002922 && ${Target.Distance} <= 15) {
+	/if (${FindItem[=Chains of Reflection].ID} && ${FindItem[=Chains of Reflection].Timer}==0) {
+		/call e3_Cast ${Target.ID} "Chains of Reflection"
+		}		
+	}
+/return	
 	
 
 Sub Thf_Setup
@@ -136,3 +155,5 @@ SUB THF_CharacterSettings
 
 /if (${Debug}) /echo <== THF_CharacterSettings -|
 /RETURN
+
+
