@@ -357,7 +357,7 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 				/varset barkMsg ${barkMsg.Arg[1,-]}
 				/varset barkMsg ${barkMsg.Left[${Math.Calc[${barkMsg.Length} - 1].Int}]}
 			}
-			/if (${Me.Class.ShortName.Equal[ROG]} && ${Me.Hiding}) {
+			/if (${Me.Class.ShortName.Equal["ROG"]} && ${Me.Invis}) {
 				/doability Hide
 				}
 			/say ${barkMsg}
