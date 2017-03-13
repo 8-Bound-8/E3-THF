@@ -44,9 +44,9 @@ sub check_DivineArb
 				/if (${Bool[${NetBots[${Group.Member[${i}]}]}]} && ${NetBots[${Group.Member[${i}]}].PctHPs} < ${DivineArb_Pct} || ${Spawn[pc ${Group.Member[${i}]}].PctHPs} < ${DivineArb_Pct}) {
 					
 					/if (${NetBots[${Group.Member[${i}]}].PctHPs}<${DivineArb_Pct}) {
-						/if (${FindItemCount[Ancient Frozen Aegis of Divinity]} && ${FindItem[Ancient Frozen Aegis of Divinity].Timer}==0) && !${itemTimer_${FindItem[=Ancient Frozen Aegis of Divinity].ID}}) {
+						/if (${FindItemCount[Ancient Frozen Aegis of Divinity]} && ${FindItem[Ancient Frozen Aegis of Divinity].Timer}==0) {
 							/call e3_Cast ${Me.ID} "Ancient Frozen Aegis of Divinity"
-						} else /if (${FindItemCount[Ancient Shield of the Divine]} && ${FindItem[Ancient Shield of the Divine].Timer}==0) && !${itemTimer_${FindItem[=Ancient Shield of the Divine].ID}}) {
+						} else /if (${FindItemCount[Ancient Shield of the Divine]} && ${FindItem[Ancient Shield of the Divine].Timer}==0 && !${FindItemCount[Ancient Frozen Aegis of Divinity]}) {
 							/call e3_Cast ${Me.ID} "Ancient Shield of the Divine"
 						} else /if (${Me.AltAbilityReady[Divine Arbitration]}) {
 							/call e3_Cast ${Me.ID} "Divine Arbitration"
@@ -318,6 +318,7 @@ SUB CLR_MacroSettings
 	/call WriteToIni "${advSettings_Ini},CLR Functions,CLR Function#8" "check_Nukes" 1
 	/call WriteToIni "${advSettings_Ini},CLR Functions,CLR Function#9" "check_Buffs" 1
 	/call WriteToIni "${advSettings_Ini},CLR Functions,CLR Function#10" "check_GatherMana" 1
+	
 
 /if (${Debug}) /echo <== CLR_MacroSettings -|
 /RETURN
